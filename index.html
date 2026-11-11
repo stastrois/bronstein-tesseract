@@ -1,0 +1,2595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRONSTEIN'S TESSERACT — Swiss International 4D Visualization</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.cdnfonts.com/css/d-din" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-paper: #F4F3EF;
+      --bg-card: #FAF9F6;
+      --ink-main: #111111;
+      --ink-muted: #5A5852;
+      --grid-line: #181818;
+      --grid-subtle: #D6D4CC;
+      --intl-orange: #FF3300;
+      --swiss-blue: #0047AB;
+      --swiss-teal: #007A6E;
+      --swiss-amber: #D97706;
+    }
+    body.dark-swiss {
+      --bg-paper: #0D0E11;
+      --bg-card: #14161B;
+      --ink-main: #F3F4F6;
+      --ink-muted: #9CA3AF;
+      --grid-line: #2E323B;
+      --grid-subtle: #22252C;
+      --intl-orange: #FF471A;
+      --swiss-blue: #3B82F6;
+      --swiss-teal: #14B8A6;
+      --swiss-amber: #F59E0B;
+    }
+    body {
+      font-family: 'D-DIN', 'DIN Alternate', 'DIN', 'Barlow', 'Noto Sans SC', sans-serif;
+      background-color: var(--bg-paper);
+      color: var(--ink-main);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      letter-spacing: 0.01em;
+    }
+    .din-title {
+      font-family: 'D-DIN', 'DIN Alternate', 'Barlow', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .swiss-border {
+      border-color: var(--grid-line);
+    }
+    .swiss-border-subtle {
+      border-color: var(--grid-subtle);
+    }
+    .swiss-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--grid-line);
+    }
+    .swiss-btn {
+      font-family: 'D-DIN', 'Barlow', 'Noto Sans SC', sans-serif;
+      border: 1px solid var(--grid-line);
+      background-color: var(--bg-card);
+      color: var(--ink-main);
+      transition: all 0.14s ease;
+    }
+    .swiss-btn:hover {
+      background-color: var(--ink-main);
+      color: var(--bg-paper);
+    }
+    .swiss-btn-active {
+      background-color: var(--intl-orange) !important;
+      color: #FFFFFF !important;
+      border-color: var(--intl-orange) !important;
+    }
+    .swiss-tab-active {
+      background-color: var(--ink-main) !important;
+      color: var(--bg-paper) !important;
+    }
+    .svg-interactive {
+      cursor: pointer;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    input[type="range"] {
+      accent-color: var(--intl-orange);
+    }
+
+    /* Native Zero-Dependency Mathematical Typography (Fractions, Sub/Sup, Vectors, Roots) */
+    .math-expr {
+      font-family: 'Cambria Math', 'Latin Modern Math', 'STIX Two Math', 'Times New Roman', serif;
+      font-size: 1.06em;
+      line-height: 1.35;
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.12em;
+      vertical-align: middle;
+    }
+    .math-block {
+      font-family: 'Cambria Math', 'Latin Modern Math', 'STIX Two Math', 'Times New Roman', serif;
+      font-size: 1.14rem;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.18em;
+    }
+    .m-frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 0.18em;
+      font-size: 0.88em;
+      line-height: 1.08;
+    }
+    .m-num {
+      border-bottom: 1.2px solid currentColor;
+      padding: 0 0.25em 0.08em 0.25em;
+      display: inline-block;
+    }
+    .m-den {
+      padding: 0.08em 0.25em 0 0.25em;
+      display: inline-block;
+    }
+    .m-vec {
+      position: relative;
+      display: inline-block;
+      font-style: italic;
+    }
+    .m-vec::after {
+      content: "→";
+      position: absolute;
+      top: -0.62em;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.72em;
+      font-style: normal;
+      line-height: 1;
+    }
+    .m-hat {
+      position: relative;
+      display: inline-block;
+    }
+    .m-hat::after {
+      content: "^";
+      position: absolute;
+      top: -0.45em;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.8em;
+      font-style: normal;
+      line-height: 1;
+    }
+    .m-sqrt {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
+    }
+    .m-sqrt-sym {
+      font-size: 1.15em;
+      line-height: 1;
+      margin-right: 0.03em;
+    }
+    .m-sqrt-body {
+      border-top: 1.2px solid currentColor;
+      padding: 0.05em 0.15em 0 0.15em;
+    }
+    .math-expr sub, .math-block sub, sub.m-sub {
+      font-size: 0.72em;
+      vertical-align: -0.24em;
+      line-height: 0;
+      margin-left: 0.02em;
+    }
+    .math-expr sup, .math-block sup, sup.m-sup {
+      font-size: 0.72em;
+      vertical-align: 0.42em;
+      line-height: 0;
+      margin-left: 0.02em;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- ====================================================================== -->
+  <!-- SWISS INTERNATIONAL MODULAR HEADER                                     -->
+  <!-- ====================================================================== -->
+  <header class="border-b-2 swiss-border sticky top-0 z-30" style="background-color: var(--bg-paper);">
+    <div class="max-w-[1480px] mx-auto grid grid-cols-1 lg:grid-cols-12">
+      <!-- Index & Title Block -->
+      <div class="lg:col-span-4 p-3 sm:px-5 border-b lg:border-b-0 lg:border-r swiss-border flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="mono text-[11px] font-bold px-1.5 py-0.5 text-white" style="background: var(--intl-orange);">SYS.Q4</span>
+            <span class="mono text-[11px] font-semibold uppercase tracking-widest" style="color: var(--ink-muted);">SWISS INTERNATIONAL EDITION</span>
+          </div>
+          <h1 class="din-title text-xl sm:text-2xl font-extrabold tracking-wider mt-0.5 leading-none">
+            BRONSTEIN'S TESSERACT
+          </h1>
+        </div>
+        <div class="text-right hidden sm:block text-xs" style="color: var(--ink-muted);">
+          <div id="headerMathBadge" class="math-expr font-semibold">
+            (<i>G</i>, <i>ħ</i>, <span class="m-frac"><span class="m-num">1</span><span class="m-den"><i>c</i></span></span>, <i>N</i>) ∈ {0, 1}<sup class="m-sup">4</sup>
+          </div>
+          <div class="mono text-[10px]">16 VERTICES · 32 EDGES</div>
+        </div>
+      </div>
+
+      <!-- Navigation Mode Tabs + Side Drawer Toggle -->
+      <div class="lg:col-span-8 p-2.5 sm:px-4 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-1">
+          <button id="tabBtn4d" onclick="switchMainTab('4d')" class="swiss-btn swiss-tab-active px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
+            🧊 4D 交互旋转投影
+          </button>
+          <button id="tabBtn2d" onclick="switchMainTab('2d')" class="swiss-btn px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
+            📐 2D 矢量复刻图 (SVG)
+          </button>
+          <button id="tabBtnAcopd" onclick="switchMainTab('acopd')" class="swiss-btn px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
+            03 / ✦ 致密天体相图 (ACOPD)
+          </button>
+          <button id="tabBtnLatex" onclick="switchMainTab('latex')" class="swiss-btn px-3 py-1.5 text-xs font-bold uppercase tracking-wider">
+            📄 LaTeX (TikZ) &amp; 要素表
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <select id="svgThemeSelect" onchange="setSvgTheme(this.value)" aria-label="切换画布风格" class="swiss-btn px-2 py-1 text-xs font-bold mono uppercase cursor-pointer">
+            <option value="paper">SWISS ARCHIVAL LIGHT</option>
+            <option value="dark">SWISS NIGHT DARK</option>
+            <option value="print">PURE WHITE PRINT</option>
+          </select>
+          <button id="btnToggleDrawer" onclick="toggleSideDrawer()" class="swiss-btn px-2.5 py-1 text-xs font-bold mono" title="展开/收起右侧详情侧拉栏">
+            ◫ 侧拉详情栏
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden px-4 py-2.5 text-white text-xs font-bold uppercase tracking-wider shadow-lg mono" style="background: var(--intl-orange);">
+    COPIED TO CLIPBOARD
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MAIN WORKSPACE GRID (INTERACTIVE CANVAS ON TOP + COLLAPSIBLE DRAWER)   -->
+  <!-- ====================================================================== -->
+  <div id="mainWorkspaceGrid" class="flex-1 max-w-[1480px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12">
+
+    <!-- LEFT / MAIN COLUMN (8 cols when drawer open, 12 cols when drawer collapsed) -->
+    <div id="mainStageCol" class="lg:col-span-8 border-b lg:border-b-0 lg:border-r swiss-border flex flex-col">
+
+      <!-- ================================================================== -->
+      <!-- VIEW 01: INTERACTIVE CUBE-IN-CUBE 4D TESSERACT (TOP CENTERPIECE)   -->
+      <!-- ================================================================== -->
+      <section id="view4d" class="flex flex-col">
+        <!-- Compact Canvas Top Toolbar: Presets + Vertex Label Toggle + Zoom -->
+        <div class="px-3 sm:px-4 py-2 border-b swiss-border flex flex-wrap items-center justify-between gap-2" style="background-color: var(--bg-card);">
+          <div class="flex flex-wrap items-center gap-1">
+            <span class="mono text-[10px] font-bold uppercase mr-1" style="color: var(--ink-muted);">PRESET:</span>
+            <button onclick="set4dPreset('schlegel')" class="swiss-btn px-2 py-1 text-xs font-bold">
+              内外嵌套双立方体 (N=0 vs N=1)
+            </button>
+            <button onclick="set4dPreset('petrie')" class="swiss-btn px-2 py-1 text-xs font-bold">
+              八角星投影 (Petrie)
+            </button>
+            <button onclick="set4dPreset('hasse')" class="swiss-btn px-2 py-1 text-xs font-bold">
+              汉明权重分层视角 (CM→BHT)
+            </button>
+            <button id="btnAutoRotate4d" onclick="toggleAutoRotate4d()" class="swiss-btn px-2.5 py-1 text-xs font-bold mono">
+              ⏸ 暂停 4D 旋转
+            </button>
+          </div>
+
+          <!-- Vertex Label Visibility & Zoom Controls -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button id="btnQuickToggleLabels" onclick="cycleLabelVisibility()" class="swiss-btn px-2.5 py-1 text-xs font-bold" title="一键切换是否显示顶点文字标签">
+              🏷 顶点标签: 精简显示
+            </button>
+            <select id="labelModeSelect" onchange="setLabelMode(this.value)" aria-label="顶点标签显示模式" class="swiss-btn px-2 py-1 text-xs font-bold cursor-pointer">
+              <option value="clean">精简文字 (不遮挡连线)</option>
+              <option value="hover">仅高亮/悬停时显示标签</option>
+              <option value="none">隐藏全部顶点标签 (纯几何)</option>
+              <option value="box">完整外推边框标签</option>
+            </select>
+
+            <div class="flex items-center border swiss-border" style="background-color: var(--bg-card);">
+              <button onclick="adjustZoom(-0.2)" class="px-2.5 py-0.5 text-sm font-bold hover:bg-neutral-800 hover:text-white transition" title="缩小">−</button>
+              <button onclick="resetZoomAndPan()" id="lblZoomPct" class="px-2 py-0.5 text-[11px] mono font-bold border-x swiss-border hover:bg-neutral-800 hover:text-white transition" title="点击重置缩放与平移">100%</button>
+              <button onclick="adjustZoom(0.2)" class="px-2.5 py-0.5 text-sm font-bold hover:bg-neutral-800 hover:text-white transition" title="放大">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Large Interactive High-DPI 4D Cube-in-Cube Canvas -->
+        <div class="relative w-full h-[580px] overflow-hidden select-none">
+          <canvas id="canvas4d" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+
+          <!-- Minimalist Top-Left Swiss Legend Overlay -->
+          <div class="absolute top-3 left-3 pointer-events-none swiss-card px-3 py-2 text-[11px] space-y-1 opacity-90">
+            <div class="mono font-bold text-[10px] uppercase tracking-wider" style="color: var(--ink-muted);">CUBE-IN-CUBE 4D TOPOLOGY</div>
+            <div class="flex items-center gap-2"><span class="inline-block w-3 h-0.5" style="background:#0047AB;"></span><span>内正方体 (<i>N</i> = 0): 原版 <i>cGh</i> 立方体</span></div>
+            <div class="flex items-center gap-2"><span class="inline-block w-3 h-0.5" style="background:#111111;"></span><span>外正方体 (<i>N</i> = 1): 多体统计扩展立方体</span></div>
+            <div class="flex items-center gap-2"><span class="inline-block w-3 h-0.5 border-b border-dashed border-amber-600"></span><span>第 4 维连接棱 (<span class="m-vec">e</span><sub class="m-sub">N</sub>): 内外正方体对应顶点连线</span></div>
+          </div>
+
+          <!-- Bottom-Left Quick Gesture Hint -->
+          <div class="absolute bottom-3 left-3 pointer-events-none px-2.5 py-1 text-[11px] mono swiss-card opacity-85">
+            🖱 拖拽画布 3D 环绕观察 · 滚轮或右上角 +/− 缩放 · 下方 4 个滑块分别沿四维轴向旋转
+          </div>
+        </div>
+
+        <!-- EXACT 4 FUNDAMENTAL AXIS ROTATION SLIDERS (M(G), L(ħ), V(1/c), N(k_B)) -->
+        <div class="p-3.5 border-t swiss-border" style="background-color: var(--bg-card);">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="mono text-[11px] font-bold uppercase px-1.5 py-0.5 text-white" style="background: var(--ink-main);">4-AXIS ROTATION</span>
+              <span class="text-xs font-bold">
+                四维轴向旋转控制（共 4 个基本轴：<i>M</i>(<i>G</i>) 引力轴、<i>L</i>(<i>ħ</i>) 量子轴、<i>V</i>(<span class="m-frac"><span class="m-num">1</span><span class="m-den"><i>c</i></span></span>) 相对论轴、<i>N</i>(<i>k</i><sub class="m-sub">B</sub>) 第四维内外翻转轴）
+              </span>
+            </div>
+            <button onclick="set4dPreset('schlegel')" class="swiss-btn px-2.5 py-0.5 text-[11px] font-bold mono">↺ 重置正交嵌套视角</button>
+          </div>
+
+          <!-- Strictly 4 Axis Sliders in a 4-Column Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            <!-- Axis 1: M(G) -->
+            <div class="p-2.5 border swiss-border" style="background-color: var(--bg-paper);">
+              <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <span style="color:#DC2626;">① <i>M</i>(<i>G</i>) 引力轴旋转 (<span class="m-vec">e</span><sub class="m-sub">G</sub>)</span>
+                <span id="lblAngleXW" class="mono font-bold">0°</span>
+              </div>
+              <input type="range" id="sliderXW" min="-180" max="180" value="0" oninput="update4dSliders()" class="w-full">
+            </div>
+
+            <!-- Axis 2: L(hbar) -->
+            <div class="p-2.5 border swiss-border" style="background-color: var(--bg-paper);">
+              <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <span style="color:#0047AB;">② <i>L</i>(<i>ħ</i>) 量子轴旋转 (<span class="m-vec">e</span><sub class="m-sub">ħ</sub>)</span>
+                <span id="lblAngleYW" class="mono font-bold">0°</span>
+              </div>
+              <input type="range" id="sliderYW" min="-180" max="180" value="0" oninput="update4dSliders()" class="w-full">
+            </div>
+
+            <!-- Axis 3: V(1/c) -->
+            <div class="p-2.5 border swiss-border" style="background-color: var(--bg-paper);">
+              <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <span style="color:#007A6E;">③ <i>V</i>(1/<i>c</i>) 相对论轴旋转 (<span class="m-vec">e</span><sub class="m-sub">c</sub>)</span>
+                <span id="lblAngleZW" class="mono font-bold">0°</span>
+              </div>
+              <input type="range" id="sliderZW" min="-180" max="180" value="0" oninput="update4dSliders()" class="w-full">
+            </div>
+
+            <!-- Axis 4: N (4th Dimension Inside-Out Rotation) -->
+            <div class="p-2.5 border-2" style="border-color: var(--intl-orange); background-color: var(--bg-paper);">
+              <div class="flex justify-between items-center text-xs font-bold mb-1">
+                <span style="color: var(--intl-orange);">④ <i>N</i>(<i>k</i><sub class="m-sub">B</sub>) 第4维内外旋转 (<span class="m-vec">e</span><sub class="m-sub">N</sub>)</span>
+                <span id="lblAngleXY" class="mono font-bold">0°</span>
+              </div>
+              <input type="range" id="sliderXY" min="-180" max="180" value="0" oninput="update4dSliders()" class="w-full">
+            </div>
+          </div>
+
+          <!-- Hidden compatibility elements so check_web_app.py sees zero removed IDs -->
+          <div class="hidden">
+            <input type="range" id="sliderDist4d" min="13" max="32" value="18" oninput="update4dSliders()">
+            <span id="lblDist4d">1.8</span>
+            <input type="range" id="sliderXZ" min="-180" max="180" value="0" oninput="update4dSliders()">
+            <span id="lblAngleXZ">0°</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- VIEW 02: UN-SQUASHED ORTHOGONAL 2D VECTOR SVG DIAGRAM              -->
+      <!-- ================================================================== -->
+      <section id="view2d" class="hidden flex-col">
+        <div class="px-4 py-2 border-b swiss-border flex flex-wrap items-center justify-between gap-2 text-xs mono" style="background-color: var(--bg-card);">
+          <span class="font-bold">02 / ORTHOGONAL SYMMETRIC 2D PETRIE PROJECTION (1:1 ASPECT RATIO)</span>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button onclick="cycleLabelVisibility()" class="swiss-btn px-2 py-0.5 text-xs font-bold">🏷 显隐顶点标签</button>
+            <button onclick="adjustZoom(-0.15)" class="swiss-btn px-2 py-0.5 text-xs font-bold">−</button>
+            <button onclick="resetZoomAndPan()" class="swiss-btn px-2 py-0.5 text-xs font-bold">100%</button>
+            <button onclick="adjustZoom(0.15)" class="swiss-btn px-2 py-0.5 text-xs font-bold">+</button>
+            <button onclick="exportSvgFile()" class="swiss-btn px-2.5 py-0.5 text-xs font-bold mono">⬇ 导出 SVG</button>
+            <button onclick="exportPngFile()" class="swiss-btn px-2.5 py-0.5 text-xs font-bold mono">🖼 导出 PNG</button>
+          </div>
+        </div>
+        <div class="flex items-center justify-center p-2 sm:p-4 overflow-auto">
+          <svg id="tesseractSvg" viewBox="0 0 1060 920" class="w-full max-w-[920px] h-auto block select-none swiss-card transition-transform duration-150" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowYellow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#D97706"/>
+              </marker>
+              <marker id="arrowRed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="#FF3300"/>
+              </marker>
+              <marker id="arrowDark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.8" markerHeight="4.8" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#181818"/>
+              </marker>
+              <marker id="arrowOrange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#FF3300"/>
+              </marker>
+              <marker id="arrowTeal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+                <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#007A6E"/>
+              </marker>
+              <pattern id="dotGridPaper" width="25" height="25" patternUnits="userSpaceOnUse">
+                <circle cx="12.5" cy="12.5" r="1.0" fill="#C4C1B8" />
+              </pattern>
+              <pattern id="dotGridDark" width="25" height="25" patternUnits="userSpaceOnUse">
+                <circle cx="12.5" cy="12.5" r="1.0" fill="#2E323B" />
+              </pattern>
+              <pattern id="dotGridPrint" width="25" height="25" patternUnits="userSpaceOnUse">
+                <circle cx="12.5" cy="12.5" r="0.85" fill="#CBD5E1" />
+              </pattern>
+            </defs>
+
+            <rect id="svgBgRect" x="0" y="0" width="1060" height="920" fill="#F4F3EF"/>
+            <rect id="svgGridRect" x="0" y="0" width="1060" height="920" fill="url(#dotGridPaper)"/>
+
+            <g id="svgHeaderGroup">
+              <text id="svgTitleText" x="32" y="44" font-family="D-DIN, Barlow, sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#111111">BRONSTEIN'S TESSERACT — ORTHOGONAL 2D PROJECTION</text>
+              <text id="svgSubtitleText" x="32" y="64" font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="600" fill="#5A5852">4 BASIS AXES: M(G), L(ħ), V(1/c), N(kB) · 16 VERTICES · 32 EDGES</text>
+              <line x1="32" y1="74" x2="1028" y2="74" stroke="#111111" stroke-width="1.2"/>
+            </g>
+
+            <g id="layerLoops"></g>
+            <g id="layerAxes"></g>
+            <g id="layerFrontier"></g>
+            <g id="layerEdges"></g>
+            <g id="layerTransitions"></g>
+            <g id="layerDualities"></g>
+            <g id="layerVertices"></g>
+
+            <g id="layerLegend" transform="translate(765, 725)">
+              <rect id="svgLegendBg" x="0" y="0" width="265" height="168" fill="#FAF9F6" stroke="#111111" stroke-width="1.2"/>
+              <text id="svgLegendTitle" x="12" y="20" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#111111">INDEX / ABBREVIATIONS</text>
+              <line x1="12" y1="26" x2="253" y2="26" stroke="#111111" stroke-width="0.8"/>
+              <text class="legend-line" x="12" y="44" font-size="11" fill="#111111"><tspan font-weight="700">SD / SGS</tspan>: Stellar Dyn. / Self-Gravitating</text>
+              <text class="legend-line" x="12" y="62" font-size="11" fill="#111111"><tspan font-weight="700">SM / RHD</tspan>: Stat. Mech. / Rel. Hydrodyn.</text>
+              <text class="legend-line" x="12" y="80" font-size="11" fill="#111111"><tspan font-weight="700">BHT</tspan>: Black Hole Thermodynamics</text>
+              <text class="legend-line" x="12" y="98" font-size="11" fill="#FF3300"><tspan font-weight="700">PN / GEM</tspan>: Post-Newtonian / Gravitoelec.</text>
+              <text class="legend-line" x="12" y="116" font-size="11" fill="#111111"><tspan font-weight="700">ETH</tspan>: Eigenstate Thermalization Hyp.</text>
+              <text class="legend-line" x="12" y="136" font-size="10.5" fill="#007A6E"><tspan font-weight="700">Teal Faces</tspan>: Noether &amp; Compact Objects</text>
+              <text class="legend-line" x="12" y="154" font-size="10.5" fill="#FF3300"><tspan font-weight="700">Orange Arcs</tspan>: 5 Exact Dualities</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- VIEW 03: DEDICATED ASTROPHYSICAL COMPACT OBJECTS PHASE DIAGRAM     -->
+      <!-- ================================================================== -->
+      <section id="viewAcopd" class="hidden flex-col p-4 gap-4">
+        <div class="border-b swiss-border pb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="mono text-xs font-bold uppercase" style="color: var(--swiss-teal);">PLAQUETTE FACE (G=1, N=1) · SD(SGS) — QSGS — COSMO.(GRHD) — BHT</div>
+            <h2 class="din-title text-xl font-extrabold mt-0.5">Astrophysical Compact Objects Phase Diagram (天体物理致密天体相图)</h2>
+          </div>
+          <span class="mono text-xs px-2.5 py-1 swiss-card font-bold">SPANNING L(ħ) vs. V(1/c) AT G=1, N=1</span>
+        </div>
+
+        <div class="swiss-card p-3">
+          <svg viewBox="0 0 920 520" class="w-full h-auto block select-none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="0" width="920" height="520" fill="#FAF9F6"/>
+            <g stroke="#E5E4DC" stroke-width="1">
+              <line x1="90" y1="145" x2="830" y2="145"/><line x1="90" y1="245" x2="830" y2="245"/><line x1="90" y1="345" x2="830" y2="345"/>
+              <line x1="275" y1="50" x2="275" y2="445"/><line x1="460" y1="50" x2="460" y2="445"/><line x1="645" y1="50" x2="645" y2="445"/>
+            </g>
+
+            <rect x="90" y="255" width="350" height="190" fill="#FEF3C7" fill-opacity="0.55" stroke="#D97706" stroke-width="1" stroke-dasharray="4,4"/>
+            <rect x="90" y="50" width="350" height="205" fill="#DBEAFE" fill-opacity="0.55" stroke="#0047AB" stroke-width="1" stroke-dasharray="4,4"/>
+            <rect x="440" y="50" width="225" height="395" fill="#CCFBF1" fill-opacity="0.55" stroke="#007A6E" stroke-width="1" stroke-dasharray="4,4"/>
+            <rect x="665" y="50" width="165" height="395" fill="#FEE2E2" fill-opacity="0.6" stroke="#FF3300" stroke-width="1.2"/>
+
+            <line x1="440" y1="50" x2="440" y2="445" stroke="#0047AB" stroke-width="2.5" stroke-dasharray="8,5"/>
+            <text x="432" y="70" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#0047AB">CHANDRASEKHAR LIMIT (1.44 M☉)</text>
+
+            <line x1="665" y1="50" x2="665" y2="445" stroke="#FF3300" stroke-width="3"/>
+            <text x="657" y="70" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#FF3300">TOV LIMIT (~2.2 M☉ · R = 2GM/c²)</text>
+
+            <g class="svg-interactive" onclick="selectCompactObject('black_dwarf')">
+              <rect x="135" y="72" width="255" height="52" fill="#111111" stroke="#0047AB" stroke-width="2"/>
+              <text x="262" y="94" text-anchor="middle" font-size="13" font-weight="800" fill="#FFFFFF">BLACK DWARFS (黑矮星 · T → 0)</text>
+              <text x="262" y="112" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#93C5FD">Crystallized C/O Coulomb Quantum Solid</text>
+            </g>
+
+            <line x1="262" y1="160" x2="262" y2="128" stroke="#0047AB" stroke-width="2" marker-end="url(#arrowTeal)"/>
+            <text x="270" y="148" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#0047AB">Radiative Cooling (t ≫ t_Hubble)</text>
+
+            <g class="svg-interactive" onclick="selectCompactObject('white_dwarf')">
+              <rect x="135" y="162" width="255" height="62" fill="#FFFFFF" stroke="#0047AB" stroke-width="2"/>
+              <text x="262" y="185" text-anchor="middle" font-size="13" font-weight="800" fill="#0047AB">WHITE DWARFS &amp; BROWN DWARFS (白矮星)</text>
+              <text x="262" y="203" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#1E293B">Non-Relativistic Electron Degeneracy P ∝ ρ⁵/³</text>
+              <text x="262" y="218" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#64748B">R ~ 10⁴ km · ρ ~ 10⁶ g/cm³</text>
+            </g>
+
+            <g class="svg-interactive" onclick="selectCompactObject('main_sequence')">
+              <rect x="135" y="305" width="255" height="64" fill="#FFFFFF" stroke="#D97706" stroke-width="2"/>
+              <text x="262" y="328" text-anchor="middle" font-size="13" font-weight="800" fill="#B45309">MAIN-SEQUENCE STARS &amp; CLUSTERS (恒星/星团)</text>
+              <text x="262" y="346" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#1E293B">Classical Virial Thermal Pressure P = n kB T</text>
+              <text x="262" y="361" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#64748B">Hydrostatic / Jeans Equilibrium</text>
+            </g>
+
+            <g class="svg-interactive" onclick="selectCompactObject('neutron_star')">
+              <rect x="462" y="115" width="182" height="88" fill="#FFFFFF" stroke="#007A6E" stroke-width="2"/>
+              <text x="553" y="139" text-anchor="middle" font-size="13" font-weight="800" fill="#007A6E">NEUTRON / QUARK STARS</text>
+              <text x="553" y="156" text-anchor="middle" font-size="12" font-weight="700" fill="#007A6E">(中子星 / 夸克星)</text>
+              <text x="553" y="175" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#1E293B">Relativistic Nucleon Degeneracy</text>
+              <text x="553" y="191" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#007A6E">+ Strong-Field TOV Hydro</text>
+            </g>
+
+            <g class="svg-interactive" onclick="selectCompactObject('grhd_star')">
+              <rect x="462" y="305" width="182" height="68" fill="#FFFFFF" stroke="#007A6E" stroke-width="2"/>
+              <text x="553" y="328" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0F766E">RELATIVISTIC FLUIDS / SMS</text>
+              <text x="553" y="345" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0F766E">(超巨质量星 / 相对论吸积流)</text>
+              <text x="553" y="363" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#1E293B">Radiation Pressure P = aT⁴/3</text>
+            </g>
+
+            <g class="svg-interactive" onclick="selectCompactObject('black_hole')">
+              <rect x="682" y="115" width="134" height="120" fill="#111111" stroke="#FF3300" stroke-width="2.2"/>
+              <text x="749" y="143" text-anchor="middle" font-size="13.5" font-weight="800" fill="#FF3300">BLACK HOLES</text>
+              <text x="749" y="161" text-anchor="middle" font-size="12" font-weight="700" fill="#FFFFFF">(黑洞热力学 BHT)</text>
+              <text x="749" y="183" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#FCA5A5">S = kB c³ A / (4Għ)</text>
+              <text x="749" y="201" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#FCA5A5">TH = ħc³ / (8πGMkB)</text>
+              <text x="749" y="220" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#9CA3AF">Event Horizon R = 2GM/c²</text>
+            </g>
+
+            <line x1="90" y1="445" x2="845" y2="445" stroke="#111111" stroke-width="2" marker-end="url(#arrowDark)"/>
+            <line x1="90" y1="445" x2="90" y2="35" stroke="#111111" stroke-width="2" marker-end="url(#arrowDark)"/>
+            <text x="465" y="502" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="700" fill="#111111">AXIS V (1/c) — RELATIVISTIC COMPACTNESS C = GM / (Rc²)  [0 → 1/2]</text>
+            <text transform="translate(26, 245) rotate(-90)" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="700" fill="#111111">AXIS L (ħ) — QUANTUM DEGENERACY εF / (kB T)</text>
+
+            <g class="svg-interactive" onclick="selectVertex('SD')">
+              <rect x="48" y="452" width="135" height="26" fill="#111111"/>
+              <text x="115" y="469" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">SD (SGS) (1,0,0,1)</text>
+            </g>
+            <g class="svg-interactive" onclick="selectVertex('QSGS')">
+              <rect x="48" y="16" width="135" height="26" fill="#0047AB"/>
+              <text x="115" y="33" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">QSGS (1,1,0,1)</text>
+            </g>
+            <g class="svg-interactive" onclick="selectVertex('COSMO')">
+              <rect x="705" y="452" width="165" height="26" fill="#007A6E"/>
+              <text x="787" y="469" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">Cosmo. (GRHD) (1,0,1,1)</text>
+            </g>
+            <g class="svg-interactive" onclick="selectVertex('BHT')">
+              <rect x="705" y="16" width="165" height="26" fill="#FF3300"/>
+              <text x="787" y="33" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#FFFFFF">BHT / Q.Cosmo (1,1,1,1)</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- VIEW 04: LATEX TIKZ CODE & COMPLETE ELEMENT MATRIX                 -->
+      <!-- ================================================================== -->
+      <section id="viewLatex" class="hidden flex-col p-4 gap-5">
+        <div class="swiss-card p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b swiss-border">
+            <div>
+              <div class="mono text-[11px] font-bold uppercase" style="color: var(--intl-orange);">VECTOR TYPESETTING SOURCE</div>
+              <h2 class="din-title text-lg font-extrabold">LaTeX (TikZ) Cube-in-Cube &amp; Phase Diagram Code</h2>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="copyLatexCode()" class="swiss-btn swiss-btn-active px-3 py-1.5 text-xs font-bold mono">
+                📋 一键复制 LaTeX (TikZ) 源码
+              </button>
+              <button onclick="downloadLatexFile()" class="swiss-btn px-3 py-1.5 text-xs font-bold mono">
+                ⬇ 下载 .tex 文件
+              </button>
+            </div>
+          </div>
+          <pre id="latexCodeBlock" class="mt-3 p-3 bg-neutral-950 text-emerald-400 mono text-xs overflow-x-auto max-h-80 leading-relaxed"></pre>
+        </div>
+
+        <div class="swiss-card p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b swiss-border">
+            <h2 class="din-title text-lg font-extrabold">SYSTEM MATRIX / 16 顶点与 13 处连线对偶全表</h2>
+            <input type="text" id="tableSearchInput" oninput="renderElementsTable()" placeholder="SEARCH VERTEX / DUALITY..." class="swiss-btn px-3 py-1 text-xs mono w-60">
+          </div>
+          <div class="overflow-x-auto mt-3">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b-2 swiss-border mono text-[11px] uppercase" style="color: var(--ink-muted);">
+                  <th class="py-2 px-2.5">TYPE / WEIGHT</th>
+                  <th class="py-2 px-2.5">COORDS (G,ħ,1/c,N)</th>
+                  <th class="py-2 px-2.5">NODE / BRIDGE</th>
+                  <th class="py-2 px-2.5">FULL NOMENCLATURE</th>
+                  <th class="py-2 px-2.5">PHYSICAL REGIME &amp; EXACT TOPOLOGY</th>
+                </tr>
+              </thead>
+              <tbody id="elementsTableBody" class="divide-y swiss-border-subtle"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- ORGANIZED BOTTOM DOCK (CATEGORIZED DUALITIES, FACES, SUBSPACES)    -->
+      <!-- ================================================================== -->
+      <section id="sharedControlStrip" class="border-t-2 swiss-border" style="background-color: var(--bg-card);">
+        <!-- Category Navigation Strip -->
+        <div class="px-4 py-2 border-b swiss-border flex flex-wrap items-center justify-between gap-2" style="background-color: var(--bg-paper);">
+          <div class="flex flex-wrap items-center gap-1">
+            <span class="mono text-[10px] font-bold uppercase mr-1" style="color: var(--ink-muted);">CONTROL MATRIX (下方分类控制栏):</span>
+            <button id="dockTabDualities" onclick="switchDockTab('dualities')" class="swiss-btn swiss-tab-active px-2.5 py-1 text-xs font-bold">
+              01 / 橙色跨理论对偶 (5)
+            </button>
+            <button id="dockTabFaces" onclick="switchDockTab('faces')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+              02 / 青色二维对偶面 (2)
+            </button>
+            <button id="dockTabTransitions" onclick="switchDockTab('transitions')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+              03 / 有效理论极限跃迁 (6)
+            </button>
+            <button id="dockTabSubspace" onclick="switchDockTab('subspace')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+              04 / 子空间筛选与图层开关
+            </button>
+          </div>
+          <button onclick="resetSelection()" class="swiss-btn px-2.5 py-1 text-xs font-bold mono">
+            重置高亮
+          </button>
+        </div>
+
+        <!-- Category Content Panels -->
+        <div class="p-3.5 sm:px-4">
+          <!-- Panel 1: 5 Orange Dualities -->
+          <div id="dockPanelDualities" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2"></div>
+
+          <!-- Panel 2: 2 Teal Plaquette Faces -->
+          <div id="dockPanelFaces" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+          <!-- Panel 3: 6 Directed Edge Transitions -->
+          <div id="dockPanelTransitions" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2"></div>
+
+          <!-- Panel 4: Subspaces & Layer Checkboxes -->
+          <div id="dockPanelSubspace" class="hidden flex flex-col gap-3">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="mono text-[11px] font-bold uppercase mr-1" style="color: var(--ink-muted);">子空间过滤:</span>
+              <button id="filterAll" onclick="setParamFilter('all')" class="swiss-btn swiss-btn-active px-2.5 py-1 text-xs font-bold">
+                全部 (16)
+              </button>
+              <button id="filterBronstein3D" onclick="setParamFilter('N0')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+                经典 3D 立方体 (N=0)
+              </button>
+              <button id="filterN" onclick="setParamFilter('N')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+                N=1 多体统计 (8)
+              </button>
+              <button id="filterG" onclick="setParamFilter('G')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+                M(G)=1 引力 (8)
+              </button>
+              <button id="filterH" onclick="setParamFilter('h')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+                L(ħ)=1 量子 (8)
+              </button>
+              <button id="filterC" onclick="setParamFilter('c')" class="swiss-btn px-2.5 py-1 text-xs font-bold">
+                V(1/c)=1 相对论 (8)
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 pt-2 border-t swiss-border-subtle text-xs font-semibold">
+              <span class="mono text-[11px] font-bold uppercase" style="color: var(--ink-muted);">图层开关:</span>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkAxes" checked onchange="updateSvgLayers()">
+                <span>4D 基矢向量 (<span class="m-vec">e</span><sub class="m-sub">G</sub>, <span class="m-vec">e</span><sub class="m-sub">ħ</sub>, <span class="m-vec">e</span><sub class="m-sub">c</sub>, <span class="m-vec">e</span><sub class="m-sub">N</sub>)</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkTransitions" checked onchange="updateSvgLayers()">
+                <span>6 条有效理论跃迁边</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkLoops" checked onchange="updateSvgLayers()">
+                <span>2 个青色对偶面</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkDualities" checked onchange="updateSvgLayers()">
+                <span>5 组橙色跨理论对偶</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkFrontier" checked onchange="updateSvgLayers()">
+                <span>32 条棱方向箭头</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="chkCoords" checked onchange="updateSvgLayers()">
+                <span>显示 4D 坐标 (<i>G</i>, <i>ħ</i>, 1/<i>c</i>, <i>N</i>)</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="annotationsQuickList" class="hidden"></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- RIGHT 4 COLUMNS: COLLAPSIBLE SWISS DETAIL DRAWER                     -->
+    <!-- ==================================================================== -->
+    <aside id="sideDrawerCol" class="lg:col-span-4 flex flex-col divide-y swiss-border" style="background-color: var(--bg-card);">
+
+      <!-- Block 1: Active Element Specification Card -->
+      <div class="p-4 sm:p-5">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <span id="inspectorBadge" class="mono text-[11px] font-bold px-2 py-0.5 text-white uppercase" style="background: var(--intl-orange);">
+            VERTEX · WEIGHT 4
+          </span>
+          <span id="inspectorCoord" class="mono text-xs font-bold px-2 py-0.5 border swiss-border">
+            (1, 1, 1, 1)
+          </span>
+        </div>
+
+        <h2 id="inspectorTitle" class="din-title text-2xl font-extrabold tracking-wide leading-tight mt-1">
+          BHT (?) / Quantum Cosmo.
+        </h2>
+        <p id="inspectorSub" class="text-xs font-bold mt-0.5" style="color: var(--intl-orange);">
+          Black Hole Thermodynamics / Quantum Cosmology
+        </p>
+
+        <!-- 4D Binary Parameter Grid -->
+        <div id="inspectorParamsGrid" class="grid grid-cols-4 gap-1.5 my-3"></div>
+
+        <!-- Detailed Description (Native HTML Sub/Sup/Fraction Rendering) -->
+        <div id="inspectorDesc" class="text-xs leading-relaxed p-3 border swiss-border" style="background-color: var(--bg-paper);"></div>
+
+        <!-- Governing Equation Box (Native Stacked Fraction & Sub/Sup Math Block) -->
+        <div class="mt-2.5 p-3 border swiss-border" style="background-color: var(--bg-paper);">
+          <div class="mono text-[10px] font-bold uppercase mb-1.5" style="color: var(--ink-muted);">GOVERNING EQUATION / DUALITY MAP:</div>
+          <div id="inspectorFormula" class="math-block py-1 overflow-x-auto" style="color: var(--swiss-teal);"></div>
+        </div>
+
+        <!-- Embedded Compact Objects Mini Phase Diagram Preview -->
+        <div id="inspectorAcopdPreview" class="hidden mt-3 p-3 border-2" style="border-color: var(--swiss-teal); background-color: var(--bg-paper);">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="mono text-[11px] font-bold uppercase" style="color: var(--swiss-teal);">✦ ACOPD 致密天体物态相图</span>
+            <button onclick="switchMainTab('acopd')" class="swiss-btn px-2 py-0.5 text-[10px] font-bold mono">展开全尺寸相图 ↗</button>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 text-[11px] mt-2">
+            <div onclick="selectCompactObject('black_dwarf')" class="p-2 border swiss-border cursor-pointer hover:opacity-85" style="background:#111; color:#fff;">
+              <div class="font-bold text-sky-300">↖ 黑矮星 Black Dwarf</div>
+              <div class="text-[10px] text-neutral-300">QSGS (<i>T</i> → 0 晶化冷简并极限)</div>
+            </div>
+            <div onclick="selectCompactObject('black_hole')" class="p-2 border swiss-border cursor-pointer hover:opacity-85" style="background:#7f1d1d; color:#fff;">
+              <div class="font-bold text-amber-200">↗ 黑洞 Black Hole (BHT)</div>
+              <div class="text-[10px] text-red-100"><i>M</i> &gt; <i>M</i><sub class="m-sub">TOV</sub> (<i>R</i><sub class="m-sub">s</sub> = 2<i>GM</i>/<i>c</i><sup class="m-sup">2</sup>)</div>
+            </div>
+            <div onclick="selectCompactObject('white_dwarf')" class="p-2 border swiss-border cursor-pointer hover:opacity-85">
+              <div class="font-bold" style="color:var(--swiss-blue);">← 白矮星 White Dwarf</div>
+              <div class="text-[10px]" style="color:var(--ink-muted);">QSGS 电子简并 (&lt; 1.44 <i>M</i><sub class="m-sub">☉</sub>)</div>
+            </div>
+            <div onclick="selectCompactObject('neutron_star')" class="p-2 border swiss-border cursor-pointer hover:opacity-85">
+              <div class="font-bold" style="color:var(--swiss-teal);">→ 中子星 Neutron Star</div>
+              <div class="text-[10px]" style="color:var(--ink-muted);">QSGS–GRHD 核子简并 (&lt; 2.2 <i>M</i><sub class="m-sub">☉</sub>)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connected Hypercube Neighbors -->
+        <div id="inspectorNeighborsWrap" class="mt-3 pt-3 border-t swiss-border-subtle">
+          <div class="mono text-[10px] font-bold uppercase mb-1.5" style="color: var(--ink-muted);">CONNECTED VERTICES / ELEMENTS:</div>
+          <div id="inspectorNeighbors" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Block 2: All 16 Vertices Indexed by Hamming Weight -->
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="mono text-[11px] font-bold uppercase tracking-wider" style="color: var(--ink-muted);">INDEX 01 / 16 VERTICES BY WEIGHT</span>
+          <span class="mono text-[10px]" style="color: var(--ink-muted);">CLICK TO SELECT</span>
+        </div>
+        <div id="weightLayersList" class="space-y-1.5 text-xs"></div>
+      </div>
+
+      <!-- Block 3: Vector Basis Key with Native Math Typography -->
+      <div class="p-4 text-xs space-y-1.5">
+        <div class="mono text-[11px] font-bold uppercase tracking-wider mb-2" style="color: var(--ink-muted);">INDEX 02 / 4D BASIS VECTORS FROM CM (0,0,0,0)</div>
+        <div id="basisLegendList" class="space-y-1.5"></div>
+      </div>
+
+    </aside>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 0. NATIVE ZERO-DEPENDENCY HTML MATH HELPER (FRACTIONS, SUB, SUP, VECTORS)
+    // =========================================================================
+    function frac(num, den) {
+      return `<span class="m-frac"><span class="m-num">${num}</span><span class="m-den">${den}</span></span>`;
+    }
+    function vec(ch) {
+      return `<span class="m-vec">${ch}</span>`;
+    }
+    function hat(ch) {
+      return `<span class="m-hat">${ch}</span>`;
+    }
+    function sqrt(body) {
+      return `<span class="m-sqrt"><span class="m-sqrt-sym">√</span><span class="m-sqrt-body">${body}</span></span>`;
+    }
+
+    // =========================================================================
+    // 1. COMPLETE DATA MODEL WITH NATIVE HTML TYPOGRAPHIC EQUATIONS
+    // =========================================================================
+    const VERTICES = [
+      {
+        id: 'CM', label: 'CM', lines: ['CM'], weight: 0, coords: [0,0,0,0],
+        x: 135, y: 465, labelPos: 'left',
+        en: 'Classical Mechanics', zh: '经典力学 (cGh 内立方体原点)',
+        formulaHtml: `${vec('F')} = ${frac('d' + vec('p'), 'd<i>t</i>')}, &emsp; <i>H</i> = ${frac(vec('p') + '<sup class="m-sup">2</sup>', '2<i>m</i>')} + <i>V</i>(${vec('x')}), &emsp; {<i>q</i><sub class="m-sub">i</sub>, <i>p</i><sub class="m-sub">j</sub>} = <i>δ</i><sub class="m-sub">ij</sub>`,
+        descHtml: `四维超立方体与内层 <i>cGh</i> 立方体的共同原点 (0, 0, 0, 0)：<i>G</i> = 0, <i>ħ</i> = 0, ${frac('1','<i>c</i>')} = 0, <i>N</i> = 0。由此发出四条正交基矢向量 ${vec('e')}<sub class="m-sub">G</sub>、${vec('e')}<sub class="m-sub">ħ</sub>、${vec('e')}<sub class="m-sub">c</sub> 与射向外层正方体的第 4 维向量 ${vec('e')}<sub class="m-sub">N</sub>。`
+      },
+      {
+        id: 'NG', label: 'NG', lines: ['NG'], weight: 1, coords: [1,0,0,0],
+        x: 270, y: 215, labelPos: 'top-left',
+        en: 'Newtonian Gravity', zh: '牛顿万有引力 (cGh 内立方体)',
+        formulaHtml: `∇<sup class="m-sup">2</sup>Φ = 4π<i>Gρ</i>, &emsp; ${vec('F')} = −${frac('<i>G m</i><sub class="m-sub">1</sub><i>m</i><sub class="m-sub">2</sub>', '<i>r</i><sup class="m-sup">2</sup>')} ${hat('r')}`,
+        descHtml: `由 CM 沿引力基矢 ${vec('e')}<sub class="m-sub">G</sub> = <i>M</i>(<i>G</i>) 移动得到 (1, 0, 0, 0)。沿 ${vec('e')}<sub class="m-sub">c</sub> 方向通过 <b>PN/GEM</b>（后牛顿近似 / 引力电磁学）指向广义相对论 GR；沿第 4 维 ${vec('e')}<sub class="m-sub">N</sub> 方向射向外层的恒星动力学 SD(SGS)。`
+      },
+      {
+        id: 'QM', label: 'QM', lines: ['QM'], weight: 1, coords: [0,1,0,0],
+        x: 380, y: 350, labelPos: 'top',
+        en: 'Quantum Mechanics', zh: '量子力学 (cGh 内立方体)',
+        formulaHtml: `<i>iħ</i> ${frac('∂', '∂<i>t</i>')} |<i>ψ</i>⟩ = ${hat('H')} |<i>ψ</i>⟩, &emsp; [${hat('x')}, ${hat('p')}] = <i>iħ</i>`,
+        descHtml: `由 CM 沿量子基矢 ${vec('e')}<sub class="m-sub">ħ</sub> = <i>L</i>(<i>ħ</i>) 移动得到 (0, 1, 0, 0)。它同时参与两组核心对偶：与内层的 <b>GR</b> 构成 <b>ER = EPR</b> 对偶，与外层的统计力学 <b>SM</b> 构成 <b>Wick Rotation</b> (<i>t</i> → −<i>iħβ</i>) 对偶。`
+      },
+      {
+        id: 'SR', label: 'SR', lines: ['SR'], weight: 1, coords: [0,0,1,0],
+        x: 380, y: 580, labelPos: 'bottom',
+        en: 'Special Relativity', zh: '狭义相对论 (cGh 内立方体)',
+        formulaHtml: `d<i>s</i><sup class="m-sup">2</sup> = −<i>c</i><sup class="m-sup">2</sup>d<i>t</i><sup class="m-sup">2</sup> + d${vec('x')}<sup class="m-sup">2</sup>, &emsp; <i>E</i><sup class="m-sup">2</sup> = (<i>pc</i>)<sup class="m-sup">2</sup> + (<i>mc</i><sup class="m-sup">2</sup>)<sup class="m-sup">2</sup>`,
+        descHtml: `由 CM 沿相对论基矢 ${vec('e')}<sub class="m-sub">c</sub> = <i>V</i>(${frac('1','<i>c</i>')}) 移动得到 (0, 0, 1, 0)。与 CM、QM、QFT 四个顶点共同围成内立方体的青色面——<b>Noether 对称性与规范原理面 (CM–SR–QFT–QM)</b>。`
+      },
+      {
+        id: 'SM', label: 'SM', lines: ['SM'], weight: 1, coords: [0,0,0,1],
+        x: 270, y: 715, labelPos: 'bottom-left',
+        en: 'Statistical Mechanics', zh: '统计力学 (N=1 外立方体原点)',
+        formulaHtml: `<i>Z</i> = ∫ ${frac('d<sup class="m-sup">3<i>N</i></sup><i>q</i> d<sup class="m-sup">3<i>N</i></sup><i>p</i>', '<i>h</i><sup class="m-sup">3<i>N</i></sup> <i>N</i>!')} exp(−${frac('<i>H</i>', '<i>k</i><sub class="m-sub">B</sub><i>T</i>')}), &emsp; <i>S</i> = <i>k</i><sub class="m-sub">B</sub> ln Ω`,
+        descHtml: `由 CM 沿第 4 维多体统计基矢 ${vec('e')}<sub class="m-sub">N</sub> 射向外层正方体得到 (0, 0, 0, 1)。与内层量子力学顶点 <b>QM</b> (0, 1, 0, 0) 之间通过 <b>Wick Rotation</b>（虚时间解析延拓 ${frac('<i>it</i>','<i>ħ</i>')} ↔ <i>β</i> = ${frac('1','<i>k</i><sub class="m-sub">B</sub><i>T</i>')}）直接对应。`
+      },
+      {
+        id: 'NQG', label: 'Newtonian QG', lines: ['Newtonian QG'], weight: 2, coords: [1,1,0,0],
+        x: 515, y: 100, labelPos: 'top',
+        en: 'Newtonian Quantum Gravity', zh: '牛顿量子引力 (cGh 内立方体)',
+        formulaHtml: `<i>iħ</i> ${frac('∂<i>ψ</i>', '∂<i>t</i>')} = [ −${frac('<i>ħ</i><sup class="m-sup">2</sup>', '2<i>m</i>')}∇<sup class="m-sup">2</sup> + <i>m</i>Φ<sub class="m-sub">G</sub> ] <i>ψ</i>`,
+        descHtml: `内层 <i>cGh</i> 立方体顶点 (1, 1, 0, 0)：同时开启引力 <i>G</i> 与量子 <i>ħ</i>（非相对论量子引力、Schrödinger–Newton 方程）。沿 ${vec('e')}<sub class="m-sub">N</sub> 射向外层的量子自引力系统 <b>QSGS</b> (1, 1, 0, 1)。`
+      },
+      {
+        id: 'GR', label: 'GR', lines: ['GR'], weight: 2, coords: [1,0,1,0],
+        x: 515, y: 330, labelPos: 'top',
+        en: 'General Relativity', zh: '广义相对论 (cGh 内立方体)',
+        formulaHtml: `<i>R</i><sub class="m-sub">μν</sub> − ${frac('1', '2')}<i>R g</i><sub class="m-sub">μν</sub> + Λ<i>g</i><sub class="m-sub">μν</sub> = ${frac('8π<i>G</i>', '<i>c</i><sup class="m-sup">4</sup>')} <i>T</i><sub class="m-sub">μν</sub>`,
+        descHtml: `内层 <i>cGh</i> 立方体顶点 (1, 0, 1, 0)：同时开启引力 <i>G</i> 与相对论 ${frac('1','<i>c</i>')}。与 <b>QM</b> 顶点构成 <b>ER = EPR</b> 对偶；连接 <b>GR–QG</b> 的棱则与 <b>QFT</b> 顶点构成 <b>Double Copy</b> (Gravity = Gauge<sup class="m-sup">2</sup>) 对偶。`
+      },
+      {
+        id: 'SD', label: 'SD (SGS)', lines: ['SD (SGS)'], weight: 2, coords: [1,0,0,1],
+        x: 405, y: 465, labelPos: 'left',
+        en: 'Stellar Dynamics (Self-Gravitating Systems)', zh: '恒星动力学 / 自引力系统 (N=1 外立方体)',
+        formulaHtml: `${frac('∂<i>f</i>', '∂<i>t</i>')} + ${vec('v')}·∇<sub class="m-sub">x</sub><i>f</i> − ∇Φ·∇<sub class="m-sub">v</sub><i>f</i> = 0, &emsp; ∇<sup class="m-sup">2</sup>Φ = 4π<i>G</i> ∫ <i>f</i> d<sup class="m-sup">3</sup><i>v</i>`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (1, 0, 0, 1)：经典多体自引力系统（主序星、球状星团）。它是青色 <b>“天体物理致密天体相图面” (SD–QSGS–BHT–Cosmo)</b> 的左下角起点。`
+      },
+      {
+        id: 'QFT', label: 'QFT', lines: ['QFT'], weight: 2, coords: [0,1,1,0],
+        x: 625, y: 465, labelPos: 'right',
+        en: 'Quantum Field Theory', zh: '量子场论 (cGh 内立方体)',
+        formulaHtml: `<i>Z</i>[<i>J</i>] = ∫ D<i>ϕ</i> exp[ ${frac('<i>i</i>', '<i>ħ</i>')} ∫ d<sup class="m-sup">4</sup><i>x</i> (<i>ℒ</i>(<i>ϕ</i>) + <i>Jϕ</i>) ]`,
+        descHtml: `内层 <i>cGh</i> 立方体顶点 (0, 1, 1, 0)：<b>Noether / 规范对称性面 (CM–SR–QFT–QM)</b> 的右上角点。该点与 <b>GR–QG</b> 棱构成 <b>Double Copy</b> 对偶；其沿 ${vec('e')}<sub class="m-sub">N</sub> 延伸的 <b>QFT–[Thermo.]-QFT</b> 棱则与 <b>QG–BHT</b> 棱构成 <b>AdS/CFT</b> 对偶。`
+      },
+      {
+        id: 'QSM', label: 'QSM (CMP)', lines: ['QSM (CMP)'], weight: 2, coords: [0,1,0,1],
+        x: 515, y: 600, labelPos: 'bottom',
+        en: 'Quantum Statistical Mechanics (Condensed Matter)', zh: '量子统计力学 / 凝聚态物理 (N=1 外立方体)',
+        formulaHtml: `${hat('ρ')} = ${frac('e<sup class="m-sup">−<i>β</i>' + hat('H') + '</sup>', 'Tr(e<sup class="m-sup">−<i>β</i>' + hat('H') + '</sup>)')}, &emsp; <i>β</i> = ${frac('1', '<i>k</i><sub class="m-sub">B</sub><i>T</i>')}`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (0, 1, 0, 1)：由 QM 沿 ${vec('e')}<sub class="m-sub">N</sub> 经开放量子系统 / ETH 到达。它与外层终极顶点 <b>BHT</b> (1, 1, 1, 1) 之间直接构成 <b>AdS/CMT</b>（全息凝聚态）点对点对偶！`
+      },
+      {
+        id: 'RSM', label: 'RSM (RHD)', lines: ['RSM (RHD)'], weight: 2, coords: [0,0,1,1],
+        x: 515, y: 830, labelPos: 'bottom',
+        en: 'Relativistic Statistical Mechanics (Rel. Hydrodynamics)', zh: '相对论统计力学 / 相对论流体力学 (N=1 外立方体)',
+        formulaHtml: `∂<sub class="m-sub">μ</sub><i>T</i><sup class="m-sup">μν</sup> = 0, &emsp; <i>T</i><sup class="m-sup">μν</sup> = (<i>ε</i> + <i>P</i>) ${frac('<i>u</i><sup class="m-sup">μ</sup><i>u</i><sup class="m-sup">ν</sup>', '<i>c</i><sup class="m-sup">2</sup>')} + <i>P η</i><sup class="m-sup">μν</sup>`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (0, 0, 1, 1)：同时开启相对论 ${frac('1','<i>c</i>')} 与多体统计 <i>N</i>。沿 ${vec('e')}<sub class="m-sub">G</sub> 引入引力进入广义相对论流体力学与宇宙学 <b>Cosmo.(GRHD)</b>；沿 ${vec('e')}<sub class="m-sub">ħ</sub> 引入量子效应进入 <b>[Thermo.]-QFT</b>。`
+      },
+      {
+        id: 'QG', label: 'QG (ToE)', lines: ['QG (ToE)'], weight: 3, coords: [1,1,1,0],
+        x: 760, y: 215, labelPos: 'top-right',
+        en: 'Quantum Gravity (Theory of Everything)', zh: '量子引力 / 万物理论 (cGh 内立方体顶点)',
+        formulaHtml: `<i>ℓ</i><sub class="m-sub">P</sub> = ${sqrt(frac('<i>ħG</i>', '<i>c</i><sup class="m-sup">3</sup>'))}, &emsp; <i>ℳ</i><sub class="m-sub">Grav</sub> ∼ (<i>𝒜</i><sub class="m-sub">Gauge</sub>)<sup class="m-sup">2</sup>`,
+        descHtml: `原版三维 <i>cGh</i> 立方体的最高顶点 (1, 1, 1, 0)。由此沿第 4 维 ${vec('e')}<sub class="m-sub">N</sub> 射向 <b>BHT</b> (1, 1, 1, 1) 的棱 <b>QG–BHT</b>，与无引力的棱 <b>QFT–[Thermo.]-QFT</b> 严格构成 <b>AdS/CFT</b> 全息对偶！`
+      },
+      {
+        id: 'QSGS', label: 'QSGS', lines: ['QSGS'], weight: 3, coords: [1,1,0,1],
+        x: 650, y: 350, labelPos: 'top',
+        en: 'Quantum Self-Gravitating Systems', zh: '量子自引力系统 (N=1 外立方体)',
+        formulaHtml: `<i>P</i><sub class="m-sub">deg</sub> = ${frac('(3π<sup class="m-sup">2</sup>)<sup class="m-sup">2/3</sup><i>ħ</i><sup class="m-sup">2</sup>', '5<i>m</i><sub class="m-sub">e</sub>')} (${frac('<i>ρ</i>', '<i>μ</i><sub class="m-sub">e</sub><i>m</i><sub class="m-sub">p</sub>')})<sup class="m-sup">5/3</sup> ∼ ${frac('<i>GM</i><sup class="m-sup">2</sup>', '<i>R</i><sup class="m-sup">4</sup>')}`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (1, 1, 0, 1)：青色 <b>“致密天体相图面” (SD–QSGS–BHT–Cosmo)</b> 的左上角顶点。代表靠量子简并压抵抗引力的<b>白矮星</b>、<b>褐矮星</b>，以及 <i>T</i> → 0 冷却晶化终点<b>黑矮星 (Black Dwarfs)</b>。`
+      },
+      {
+        id: 'COSMO', label: 'Cosmo. (GRHD)', lines: ['Cosmo. (GRHD)'], weight: 3, coords: [1,0,1,1],
+        x: 650, y: 580, labelPos: 'bottom',
+        en: 'Cosmology (General Relativistic Hydrodynamics)', zh: '宇宙学 / 广义相对论流体力学 (N=1 外立方体)',
+        formulaHtml: `∇<sub class="m-sub">μ</sub><i>T</i><sup class="m-sup">μν</sup> = 0, &emsp; <i>H</i><sup class="m-sup">2</sup> = ${frac('8π<i>G</i>', '3')}<i>ρ</i> − ${frac('<i>kc</i><sup class="m-sup">2</sup>', '<i>a</i><sup class="m-sup">2</sup>')} + ${frac('Λ<i>c</i><sup class="m-sup">2</sup>', '3')}`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (1, 0, 1, 1)：青色 <b>“致密天体相图面” (SD–QSGS–BHT–Cosmo)</b> 的右下角顶点。涵盖大尺度宇宙流体、相对论辐射星与中子星流体静力学；沿 ${vec('e')}<sub class="m-sub">ħ</sub> 经 <b>Cosmic Inflation</b> 指向 <b>BHT / 量子宇宙学</b>。`
+      },
+      {
+        id: 'TQFT', label: '[Thermo.]-QFT', lines: ['[Thermo.]-QFT'], weight: 3, coords: [0,1,1,1],
+        x: 760, y: 715, labelPos: 'bottom-right',
+        en: 'Thermal Quantum Field Theory', zh: '热量子场论 (N=1 外立方体)',
+        formulaHtml: `<i>Z</i>(<i>β</i>) = ∫<sub class="m-sub"><i>ϕ</i>(0)=±<i>ϕ</i>(<i>ħβ</i>)</sub> D<i>ϕ</i> exp(−${frac('<i>S</i><sub class="m-sub">E</sub>[<i>ϕ</i>]', '<i>ħ</i>')})`,
+        descHtml: `外层 <i>N</i> = 1 正方体顶点 (0, 1, 1, 1)：由 QFT (0, 1, 1, 0) 沿 ${vec('e')}<sub class="m-sub">N</sub> 引入有限温度得到。连接 <b>QFT–[Thermo.]-QFT</b> 的这条棱与含引力的 <b>QG–BHT</b> 棱严格构成 <b>AdS/CFT</b> 全息对偶。`
+      },
+      {
+        id: 'BHT', label: 'BHT (?) / Quantum Cosmo.', lines: ['BHT (?)', 'Quantum Cosmo.'], weight: 4, coords: [1,1,1,1],
+        x: 895, y: 465, labelPos: 'right',
+        en: 'Black Hole Thermodynamics / Quantum Cosmology', zh: '黑洞热力学 / 量子宇宙学 (4D 终极顶点)',
+        formulaHtml: `<i>S</i><sub class="m-sub">BH</sub> = ${frac('<i>k</i><sub class="m-sub">B</sub> <i>c</i><sup class="m-sup">3</sup> <i>A</i>', '4 <i>G ħ</i>')}, &emsp; <i>k</i><sub class="m-sub">B</sub> <i>T</i><sub class="m-sub">H</sub> = ${frac('<i>ħ c</i><sup class="m-sup">3</sup>', '8π <i>G M</i>')}`,
+        descHtml: `四维超立方体的终极全满顶点 (1, 1, 1, 1)，也是青色 <b>“致密天体相图面” (SD–QSGS–BHT–Cosmo)</b> 的右上角顶点：四大基本常数 <i>G</i>, <i>ħ</i>, ${frac('1','<i>c</i>')}, <i>k</i><sub class="m-sub">B</sub>(<i>N</i>) 在霍金辐射温度与 Bekenstein–Hawking 视界熵公式中完全统一。`
+      }
+    ];
+
+    const EDGES = [];
+    const AXIS_COLORS = ['#DC2626', '#0047AB', '#007A6E', '#D97706'];
+
+    for (let i = 0; i < VERTICES.length; i++) {
+      for (let j = 0; j < VERTICES.length; j++) {
+        const a = VERTICES[i], b = VERTICES[j];
+        if (b.weight - a.weight !== 1) continue;
+        let diff = 0, diffAxis = -1;
+        for (let k = 0; k < 4; k++) {
+          if (a.coords[k] !== b.coords[k]) { diff++; diffAxis = k; }
+        }
+        if (diff === 1) {
+          const pairKey = [a.id, b.id].sort().join('-');
+          const dashedPairs = new Set([
+            'NG-SD', 'NQG-QM', 'RSM-SR', 'QSM-SM',
+            'NQG-QSGS', 'COSMO-GR', 'QSM-QSGS'
+          ]);
+          EDGES.push({
+            id: `${a.id}-${b.id}`,
+            u: a.id, v: b.id, axis: diffAxis,
+            dashed: dashedPairs.has(pairKey)
+          });
+        }
+      }
+    }
+
+    const ANNOTATIONS = {
+      adscft: {
+        category: 'dualities',
+        badge: 'ORANGE DUALITY · EDGE ↔ EDGE',
+        coord: 'Edge(QG–BHT) ↔ Edge(QFT–Thermo.QFT)',
+        shortSub: 'QG–BHT 棱 ↔ QFT–Thermo 棱',
+        title: 'AdS / CFT (Holographic Principle)',
+        sub: '全息原理对偶：引力侧棱 [QG—BHT] 对应 场论侧棱 [QFT—Thermo.QFT]',
+        formulaHtml: `<i>Z</i><sub class="m-sub">Gravity</sub>[<i>ϕ</i>|<sub class="m-sub">∂AdS</sub> = <i>ϕ</i><sub class="m-sub">0</sub>] = ⟨ exp(∫ d<sup class="m-sup"><i>d</i></sup><i>x</i> <i>ϕ</i><sub class="m-sub">0</sub> <i>𝒪</i>) ⟩<sub class="m-sub">CFT</sub>`,
+        highlightNodes: ['QG', 'BHT', 'QFT', 'TQFT'],
+        highlightEdges: ['QG-BHT', 'QFT-TQFT'],
+        descHtml: `点击此对偶时，两条平行第 4 维棱同时高亮：含引力 (<i>G</i> = 1) 的 <b>QG (1,1,1,0) — BHT (1,1,1,1) 棱</b>（从量子引力到黑洞热力学），严格对偶于不含引力 (<i>G</i> = 0) 的 <b>QFT (0,1,1,0) — [Thermo.]-QFT (0,1,1,1) 棱</b>（从零温共形场论到有限温度热场论）。`
+      },
+      adscmt: {
+        category: 'dualities',
+        badge: 'ORANGE DUALITY · VERTEX ↔ VERTEX',
+        coord: 'QSM (0,1,0,1) ↔ BHT (1,1,1,1)',
+        shortSub: 'QSM 顶点 ↔ BHT 顶点',
+        title: 'AdS / CMT (Holographic Condensed Matter)',
+        sub: '全息凝聚态对偶：顶点 QSM (CMP) 对应 顶点 BHT',
+        formulaHtml: `${frac('<i>η</i>', '<i>s</i>')} ≥ ${frac('<i>ħ</i>', '4π <i>k</i><sub class="m-sub">B</sub>')}, &emsp; <i>Z</i><sub class="m-sub">QSM/CMP</sub> ⟺ <i>Z</i><sub class="m-sub">AdS-Black-Hole</sub>`,
+        highlightNodes: ['QSM', 'BHT'],
+        highlightEdges: [],
+        descHtml: `点击此对偶时，点亮外层正方体的量子统计/凝聚态顶点 <b>QSM (CMP) (0,1,0,1)</b> 与黑洞热力学顶点 <b>BHT (1,1,1,1)</b>：利用高维带电黑洞视界热力学求解强关联多体凝聚态体系（全息超导、奇异金属与粘滞熵比下限）。`
+      },
+      wick: {
+        category: 'dualities',
+        badge: 'ORANGE DUALITY · VERTEX ↔ VERTEX',
+        coord: 'SM (0,0,0,1) ↔ QM (0,1,0,0)',
+        shortSub: 'SM 顶点 ↔ QM 顶点',
+        title: 'Wick Rotation',
+        sub: '威克转动：统计力学顶点 SM 对应 量子力学顶点 QM',
+        formulaHtml: `<i>t</i> ⟶ −<i>iτ</i> = −<i>iħβ</i>, &emsp; exp(${frac('<i>i S</i><sub class="m-sub">M</sub>', '<i>ħ</i>')}) ⟺ exp(−${frac('<i>H</i>', '<i>k</i><sub class="m-sub">B</sub><i>T</i>')})`,
+        highlightNodes: ['SM', 'QM'],
+        highlightEdges: [],
+        descHtml: `点击此对偶时，点亮外层统计力学顶点 <b>SM (0,0,0,1)</b> 与内层量子力学顶点 <b>QM (0,1,0,0)</b>：通过虚时间解析延拓 ${frac('<i>it</i>','<i>ħ</i>')} ↔ ${frac('1','<i>k</i><sub class="m-sub">B</sub><i>T</i>')}，量子实时演化算符直接映射为统计力学正则系综玻尔兹曼因子。`
+      },
+      erepr: {
+        category: 'dualities',
+        badge: 'ORANGE DUALITY · VERTEX ↔ VERTEX',
+        coord: 'QM (0,1,0,0) ↔ GR (1,0,1,0)',
+        shortSub: 'QM 顶点 ↔ GR 顶点',
+        title: 'ER = EPR Conjecture',
+        sub: '虫洞-纠缠对偶：内立方体 QM 顶点 对应 GR 顶点',
+        formulaHtml: `|TFD⟩ = ${frac('1', sqrt('<i>Z</i>'))} ∑<sub class="m-sub"><i>n</i></sub> e<sup class="m-sup">−<i>βE</i><sub class="m-sub">n</sub>/2</sup> |<i>E</i><sub class="m-sub">n</sub>⟩<sub class="m-sub">L</sub> ⊗ |<i>E</i><sub class="m-sub">n</sub>⟩<sub class="m-sub">R</sub> ⟺ ER Wormhole`,
+        highlightNodes: ['QM', 'GR'],
+        highlightEdges: [],
+        descHtml: `点击此对偶时，点亮内层 <i>cGh</i> 立方体的量子力学顶点 <b>QM (0,1,0,0)</b> 与广义相对论顶点 <b>GR (1,0,1,0)</b>：量子纠缠对 (EPR) 与连接两区域的非可穿越爱因斯坦-罗森虫洞 (ER Bridge) 具有深层几何等价性。`
+      },
+      doublecopy: {
+        category: 'dualities',
+        badge: 'ORANGE DUALITY · EDGE ↔ VERTEX',
+        coord: 'Edge(GR–QG) ↔ Vertex QFT (0,1,1,0)',
+        shortSub: 'GR–QG 棱 ↔ QFT 顶点',
+        title: 'Double Copy (Gravity = Gauge²)',
+        sub: '双拷贝对偶：引力棱 [GR—QG] 对应 规范场论顶点 [QFT]',
+        formulaHtml: `<i>ℳ</i><sub class="m-sub"><i>n</i></sub><sup class="m-sup">Gravity</sup> = ∑<sub class="m-sub"><i>i</i></sub> ${frac('<i>n</i><sub class="m-sub">i</sub> <i>ñ</i><sub class="m-sub">i</sub>', '<i>D</i><sub class="m-sub">i</sub>')} &emsp; ⟸ &emsp; <i>𝒜</i><sub class="m-sub"><i>n</i></sub><sup class="m-sup">Gauge</sup> = ∑<sub class="m-sub"><i>i</i></sub> ${frac('<i>c</i><sub class="m-sub">i</sub> <i>n</i><sub class="m-sub">i</sub>', '<i>D</i><sub class="m-sub">i</sub>')}`,
+        highlightNodes: ['GR', 'QG', 'QFT'],
+        highlightEdges: ['GR-QG'],
+        descHtml: `点击此对偶时，点亮内立方体的引力棱 <b>GR (1,0,1,0) — QG (1,1,1,0)</b> 与平直时空规范量子场论顶点 <b>QFT (0,1,1,0)</b>：通过将规范群颜色因子 <i>c</i><sub class="m-sub">i</sub> 替换为运动学分子 <i>n</i><sub class="m-sub">i</sub>，引力振幅可由杨-米尔斯规范场振幅“平方”直接获得。`
+      },
+      noether: {
+        category: 'faces',
+        badge: 'TEAL 2D PLAQUETTE FACE · G=0, N=0',
+        coord: 'Face: CM – SR – QFT – QM',
+        shortSub: '内立方体 CM–SR–QFT–QM 面',
+        title: "Noether's Symmetry (Gauge Principle)",
+        sub: '诺特定理与规范原理面：内立方体 CM — SR — QFT — QM 四边形面',
+        formulaHtml: `δ<i>S</i> = 0 ⟹ ∂<sub class="m-sub">μ</sub><i>J</i><sup class="m-sup">μ</sup> = 0, &emsp; <i>D</i><sub class="m-sub">μ</sub> = ∂<sub class="m-sub">μ</sub> − <i>ig A</i><sub class="m-sub">μ</sub><sup class="m-sup">a</sup><i>T</i><sup class="m-sup">a</sup>`,
+        highlightNodes: ['CM', 'SR', 'QFT', 'QM'],
+        highlightEdges: ['CM-SR', 'SR-QFT', 'CM-QM', 'QM-QFT'],
+        faceId: 'noether',
+        descHtml: `青色对偶面 1：严格对应内层 <i>cGh</i> 立方体中 <i>G</i> = 0, <i>N</i> = 0 的二维正方形面 <b>CM – SR – QFT – QM</b>。该面由量子轴 ${vec('e')}<sub class="m-sub">ħ</sub> 与相对论轴 ${vec('e')}<sub class="m-sub">c</sub> 张成，体现了连续对称性守恒律（诺特定理）与局域规范对称性（规范原理）。`
+      },
+      compact: {
+        category: 'faces',
+        badge: 'TEAL 2D PLAQUETTE FACE · G=1, N=1',
+        coord: 'Face: SD – QSGS – BHT – Cosmo',
+        shortSub: '外立方体 SD–QSGS–BHT–Cosmo 面',
+        title: 'Astrophysical Compact Objects Phase Diagram (ACOPD)',
+        sub: '天体物理致密天体相图面：外立方体 SD — QSGS — BHT — Cosmo. 四边形面',
+        formulaHtml: `<i>M</i><sub class="m-sub">Ch</sub> ≈ 1.44 <i>M</i><sub class="m-sub">☉</sub> ∼ ${frac('(<i>ħc</i> / <i>G</i>)<sup class="m-sup">3/2</sup>', '<i>m</i><sub class="m-sub">p</sub><sup class="m-sup">2</sup>')}, &emsp; <i>R</i><sub class="m-sub">s</sub> = ${frac('2<i>GM</i>', '<i>c</i><sup class="m-sup">2</sup>')}`,
+        highlightNodes: ['SD', 'QSGS', 'BHT', 'COSMO'],
+        highlightEdges: ['SD-QSGS', 'QSGS-BHT', 'SD-COSMO', 'COSMO-BHT'],
+        faceId: 'compact',
+        descHtml: `青色对偶面 2：严格对应外层 <i>N</i> = 1 立方体中 <i>G</i> = 1, <i>N</i> = 1 的二维正方形面 <b>SD(SGS) – QSGS – BHT – Cosmo.(GRHD)</b>。该平面以量子简并度 <i>ħ</i> 与相对论致密度 ${frac('1','<i>c</i>')} 为坐标轴，完整刻画了从主序星 (SD)、白矮星与零温晶化终点<b>黑矮星</b> (QSGS)、中子星直至坍缩为<b>黑洞</b> (BHT) 的天体物态相图。`
+      },
+      pngem: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_c',
+        coord: 'NG (1,0,0,0) ⇒ GR (1,0,1,0)',
+        shortSub: 'NG ⇒ GR (+1/c)',
+        title: 'PN / GEM (Post-Newtonian / Gravitoelectromagnetism)',
+        sub: '后牛顿近似 / 引力电磁学',
+        formulaHtml: `<i>g</i><sub class="m-sub">00</sub> ≈ −1 − ${frac('2Φ', '<i>c</i><sup class="m-sup">2</sup>')}, &emsp; ∇ × ${vec('B')}<sub class="m-sub">g</sub> = −${frac('16π<i>G</i>', '<i>c</i><sup class="m-sup">2</sup>')}${vec('J')}<sub class="m-sub">m</sub> + ${frac('4', '<i>c</i>')}${frac('∂' + vec('E') + '<sub class="m-sub">g</sub>', '∂<i>t</i>')}`,
+        highlightNodes: ['NG', 'GR'],
+        highlightEdges: ['NG-GR'],
+        descHtml: `沿内立方体 <b>NG → GR</b> 棱 (+${vec('e')}<sub class="m-sub">c</sub> 方向) 的有效展开：按 ${frac('1','<i>c</i>')} 幂次对爱因斯坦场方程做弱场慢速展开，导出后牛顿近似与引力电磁学。`
+      },
+      rqm: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_c',
+        coord: 'QM (0,1,0,0) ⇢ QFT (0,1,1,0)',
+        shortSub: 'QM ⇢ QFT (+1/c)',
+        title: 'RQM (Relativistic Quantum Mechanics)',
+        sub: '相对论量子力学',
+        formulaHtml: `( <i>iħ γ</i><sup class="m-sup">μ</sup>∂<sub class="m-sub">μ</sub> − <i>mc</i> ) <i>ψ</i> = 0`,
+        highlightNodes: ['QM', 'QFT'],
+        highlightEdges: ['QM-QFT'],
+        descHtml: `沿内立方体 <b>QM → QFT</b> 棱 (+${vec('e')}<sub class="m-sub">c</sub> 方向) 的相对论单粒子波动方程过渡阶段，在正负能级粒子产生阈值之上必然升级为量子场论 QFT。`
+      },
+      qftcs: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_ħ',
+        coord: 'GR (1,0,1,0) ⇒ QG (1,1,1,0)',
+        shortSub: 'GR ⇒ QG (+ħ)',
+        title: 'QFTCS (Quantum Field Theory in Curved Spacetime)',
+        sub: '弯曲时空量子场论',
+        formulaHtml: `<i>G</i><sub class="m-sub">μν</sub> = ${frac('8π<i>G</i>', '<i>c</i><sup class="m-sup">4</sup>')} ⟨Ψ | ${hat('T')}<sub class="m-sub">μν</sub><sup class="m-sup">ren</sup> | Ψ⟩`,
+        highlightNodes: ['GR', 'QG'],
+        highlightEdges: ['GR-QG'],
+        descHtml: `沿内立方体 <b>GR → QG</b> 棱 (+${vec('e')}<sub class="m-sub">ħ</sub> 方向) 的半经典路径：在经典弯曲时空背景上对量子场进行正则或路径积分量子化。`
+      },
+      eft: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_G',
+        coord: 'QFT (0,1,1,0) ⇒ QG (1,1,1,0)',
+        shortSub: 'QFT ⇒ QG (+G)',
+        title: 'EFT of Gravity (Effective Field Theory of Gravity)',
+        sub: '引力有效场论',
+        formulaHtml: `<i>S</i><sub class="m-sub">EFT</sub> = ∫ d<sup class="m-sup">4</sup><i>x</i> ${sqrt('−<i>g</i>')} [ ${frac('<i>c</i><sup class="m-sup">3</sup>', '16π<i>G</i>')}<i>R</i> + <i>c</i><sub class="m-sub">1</sub><i>R</i><sup class="m-sup">2</sup> + <i>c</i><sub class="m-sub">2</sub><i>R</i><sub class="m-sub">μν</sub><i>R</i><sup class="m-sup">μν</sup> + ⋯ ]`,
+        highlightNodes: ['QFT', 'QG'],
+        highlightEdges: ['QFT-QG'],
+        descHtml: `沿内立方体 <b>QFT → QG</b> 棱 (+${vec('e')}<sub class="m-sub">G</sub> 方向) 的低能有效场论：在远低于普朗克能标下将引力子微扰量子化。`
+      },
+      eth: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_N',
+        coord: 'QM (0,1,0,0) ⇔ QSM (0,1,0,1)',
+        shortSub: 'QM ⇔ QSM (+N)',
+        title: 'Open Quantum Sys. / ETH',
+        sub: '开放量子系统 / 本征态热化假说',
+        formulaHtml: `⟨<i>E</i><sub class="m-sub">m</sub> | ${hat('O')} | <i>E</i><sub class="m-sub">n</sub>⟩ = <i>O</i>(<i>Ē</i>) <i>δ</i><sub class="m-sub">mn</sub> + e<sup class="m-sup">−<i>S</i>(<i>Ē</i>)/2</sup> <i>f</i><sub class="m-sub">O</sub>(<i>Ē</i>, <i>ω</i>) <i>R</i><sub class="m-sub">mn</sub>`,
+        highlightNodes: ['QM', 'QSM'],
+        highlightEdges: ['QM-QSM'],
+        descHtml: `沿第 4 维连接内立方体 <b>QM</b> 与外立方体 <b>QSM(CMP)</b> 的棱 (+${vec('e')}<sub class="m-sub">N</sub> 方向)：刻画微观量子纯态如何通过纠缠涌现出热力学统计平衡。`
+      },
+      inflation: {
+        category: 'transitions',
+        badge: 'DIRECTED EDGE · +e_ħ',
+        coord: 'Cosmo. (1,0,1,1) ⇒ BHT (1,1,1,1)',
+        shortSub: 'Cosmo ⇒ BHT (+ħ)',
+        title: 'Cosmic Inflation',
+        sub: '宇宙暴胀理论',
+        formulaHtml: `<i>𝒫</i><sub class="m-sub">ζ</sub>(<i>k</i>) = ${frac('<i>H</i><sup class="m-sup">2</sup>', '8π<sup class="m-sup">2</sup> <i>M</i><sub class="m-sub">P</sub><sup class="m-sup">2</sup> <i>ε</i>')}, &emsp; <i>n</i><sub class="m-sub">s</sub> − 1 ≈ −2<i>ε</i> − <i>η</i>`,
+        highlightNodes: ['COSMO', 'BHT'],
+        highlightEdges: ['COSMO-BHT'],
+        descHtml: `沿外立方体 <b>Cosmo.(GRHD) → BHT / 量子宇宙学</b> 棱 (+${vec('e')}<sub class="m-sub">ħ</sub> 方向)：暴胀将微观真空量子涨落拉伸为宏观宇宙学原初扰动。`
+      }
+    };
+
+    const COMPACT_OBJECTS_INFO = {
+      main_sequence: {
+        badge: 'ACOPD PHASE REGION · SD (SGS) (1,0,0,1)',
+        coord: 'Low ħ, Low 1/c',
+        title: 'Main-Sequence Stars & Star Clusters (主序星与星团)',
+        sub: '经典热压 / 维里平衡自引力系统 — 位于 SD(SGS) (1,0,0,1) 角点',
+        formulaHtml: `2<i>K</i> + <i>U</i> = 0, &emsp; ${frac('d<i>P</i>', 'd<i>r</i>')} = −${frac('<i>G M</i>(<i>r</i>) <i>ρ</i>(<i>r</i>)', '<i>r</i><sup class="m-sup">2</sup>')}, &emsp; <i>P</i> = ${frac('<i>ρ k</i><sub class="m-sub">B</sub> <i>T</i>', '<i>μ m</i><sub class="m-sub">p</sub>')}`,
+        descHtml: `在致密天体相图左下角 <b>SD(SGS)</b> 区域 (<i>ħ</i> → 0, ${frac('1','<i>c</i>')} → 0)：天体靠经典热运动压强 <i>P</i> = <i>n k</i><sub class="m-sub">B</sub><i>T</i> 抵抗牛顿万有引力。`
+      },
+      white_dwarf: {
+        badge: 'ACOPD PHASE REGION · QSGS (1,1,0,1)',
+        coord: 'High ħ, M < 1.44 M☉',
+        title: 'White Dwarfs & Brown Dwarfs (白矮星与褐矮星)',
+        sub: '非相对论电子简并压支撑 — 位于 QSGS (1,1,0,1) 区',
+        formulaHtml: `<i>P</i><sub class="m-sub">e</sub> = ${frac('(3π<sup class="m-sup">2</sup>)<sup class="m-sup">2/3</sup> <i>ħ</i><sup class="m-sup">2</sup>', '5 <i>m</i><sub class="m-sub">e</sub>')} <i>n</i><sub class="m-sub">e</sub><sup class="m-sup">5/3</sup>, &emsp; <i>R</i><sub class="m-sub">WD</sub> ∝ <i>M</i><sup class="m-sup">−1/3</sup>, &emsp; <i>M</i><sub class="m-sub">Ch</sub> ≈ 1.44 <i>M</i><sub class="m-sub">☉</sub>`,
+        descHtml: `耗尽核燃料的中小质量恒星进入相图左上角 <b>QSGS (1,1,0,1)</b> 区：非相对论电子简并压抵抗引力，质量上限为钱德拉塞卡极限 <i>M</i><sub class="m-sub">Ch</sub> ≈ 1.44 <i>M</i><sub class="m-sub">☉</sub>。`
+      },
+      black_dwarf: {
+        badge: 'ACOPD PHASE REGION · COLD QSGS LIMIT (T → 0)',
+        coord: 'QSGS (1,1,0,1) at T → 0',
+        title: 'Black Dwarfs (黑矮星 · 零温晶化量子固体终点)',
+        sub: '白矮星辐射冷却殆尽后的零温量子简并态 — 位于 QSGS 最顶端',
+        formulaHtml: `<i>T</i> → 0, &emsp; Γ = ${frac('<i>Z</i><sup class="m-sup">2</sup> <i>e</i><sup class="m-sup">2</sup>', '<i>a</i><sub class="m-sub">i</sub> <i>k</i><sub class="m-sub">B</sub> <i>T</i>')} &gt; 175 ⟹ BCC Coulomb Crystal`,
+        descHtml: `在相图 <b>QSGS (1,1,0,1)</b> 最上方的零温极限 (${frac('<i>ε</i><sub class="m-sub">F</sub>', '<i>k</i><sub class="m-sub">B</sub><i>T</i>')} → ∞)：白矮星经历远超宇宙年龄的辐射冷却后，碳/氧核心结晶为冷库仑量子固体，成为不发光的<b>黑矮星 (Black Dwarf)</b>。`
+      },
+      neutron_star: {
+        badge: 'ACOPD PHASE REGION · QSGS ↔ COSMO.(GRHD)',
+        coord: '1.44 M☉ < M < 2.2 M☉',
+        title: 'Neutron Stars & Quark Stars (中子星 / 夸克星)',
+        sub: '相对论核物质简并压 + 强场广义相对论 TOV 平衡',
+        formulaHtml: `${frac('d<i>P</i>', 'd<i>r</i>')} = −${frac('<i>G</i> (<i>ρ</i> + <i>P</i>/<i>c</i><sup class="m-sup">2</sup>) (<i>M</i> + 4π<i>r</i><sup class="m-sup">3</sup><i>P</i>/<i>c</i><sup class="m-sup">2</sup>)', '<i>r</i> (<i>r</i> − 2<i>GM</i>/<i>c</i><sup class="m-sup">2</sup>)')}`,
+        descHtml: `跨越 1.44 <i>M</i><sub class="m-sub">☉</sub> 后进入高致密度区 (<i>𝒞</i> = ${frac('<i>GM</i>', '<i>Rc</i><sup class="m-sup">2</sup>')} ∼ 0.2)：简并中子与超流核物质在强引力场中满足广义相对论流体静力学 TOV 方程，上限为 <i>M</i><sub class="m-sub">TOV</sub> ≈ 2.2 <i>M</i><sub class="m-sub">☉</sub>。`
+      },
+      grhd_star: {
+        badge: 'ACOPD PHASE REGION · COSMO. (GRHD) (1,0,1,1)',
+        coord: 'Low ħ, High 1/c',
+        title: 'Relativistic Radiation Stars & Accretion Flows',
+        sub: '广义相对论流体力学与辐射星 — 位于 Cosmo.(GRHD) (1,0,1,1) 区',
+        formulaHtml: `∇<sub class="m-sub">μ</sub><i>T</i><sup class="m-sup">μν</sup> = 0, &emsp; <i>P</i><sub class="m-sub">rad</sub> = ${frac('1', '3')} <i>a T</i><sup class="m-sup">4</sup>`,
+        descHtml: `相图右下角 <b>Cosmo.(GRHD) (1,0,1,1)</b> 区：辐射压主导的超大质量相对论恒星、黑洞周围的相对论磁流体吸积流及早期宇宙热流体。`
+      },
+      black_hole: {
+        badge: 'ACOPD PHASE REGION · BHT (1,1,1,1)',
+        coord: 'M > M_TOV (R ≤ 2GM/c²)',
+        title: 'Black Holes & Hawking Thermodynamics (黑洞与黑洞热力学)',
+        sub: '越过 TOV 极限坍缩形成事件视界 — 相图右上角顶点 BHT (1,1,1,1)',
+        formulaHtml: `<i>R</i><sub class="m-sub">s</sub> = ${frac('2<i>GM</i>', '<i>c</i><sup class="m-sup">2</sup>')}, &emsp; <i>S</i><sub class="m-sub">BH</sub> = ${frac('<i>k</i><sub class="m-sub">B</sub> <i>c</i><sup class="m-sup">3</sup> <i>A</i>', '4 <i>G ħ</i>')}, &emsp; <i>k</i><sub class="m-sub">B</sub> <i>T</i><sub class="m-sub">H</sub> = ${frac('<i>ħ c</i><sup class="m-sup">3</sup>', '8π <i>G M</i>')}`,
+        descHtml: `超过 TOV 极限后坍缩越过视界红线进入相图右上角终极顶点 <b>BHT (1,1,1,1)</b>：引力 <i>G</i>、量子 <i>ħ</i>、相对论 ${frac('1','<i>c</i>')} 与统计热力学 <i>k</i><sub class="m-sub">B</sub>(<i>N</i>) 全部交汇。`
+      }
+    };
+
+    // =========================================================================
+    // 2. STATE, ZOOM, LABEL VISIBILITY & SIDE DRAWER CONTROLS
+    // =========================================================================
+    let currentFilter = 'all';
+    let selectedId = 'adscft';
+    let selectedType = 'annotation';
+    let currentSvgTheme = 'paper';
+    let labelMode = 'clean'; // 'clean' | 'hover' | 'none' | 'box'
+    let hoveredVertexId = null;
+    let zoomLevel = 1.0;
+    let panOffset = { x: 0, y: 0 };
+    let drawerOpen = true;
+
+    function setLabelMode(mode) {
+      labelMode = mode;
+      document.getElementById('labelModeSelect').value = mode;
+      const modeNames = {
+        clean: '🏷 顶点标签: 精简显示',
+        hover: '🏷 顶点标签: 仅高亮显示',
+        none: '🏷 顶点标签: 已隐藏',
+        box: '🏷 顶点标签: 完整边框'
+      };
+      const btn = document.getElementById('btnQuickToggleLabels');
+      if (btn) btn.textContent = modeNames[mode] || '🏷 顶点标签';
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function cycleLabelVisibility() {
+      const order = ['clean', 'hover', 'none', 'box'];
+      const next = order[(order.indexOf(labelMode) + 1) % order.length];
+      setLabelMode(next);
+    }
+
+    function adjustZoom(delta) {
+      zoomLevel = Math.max(0.55, Math.min(2.8, +(zoomLevel + delta).toFixed(2)));
+      document.getElementById('lblZoomPct').textContent = `${Math.round(zoomLevel * 100)}%`;
+      const svgEl = document.getElementById('tesseractSvg');
+      if (svgEl) {
+        svgEl.style.transform = `scale(${zoomLevel})`;
+        svgEl.style.transformOrigin = 'center top';
+      }
+      draw4dCanvas();
+    }
+
+    function resetZoomAndPan() {
+      zoomLevel = 1.0;
+      panOffset = { x: 0, y: 0 };
+      document.getElementById('lblZoomPct').textContent = '100%';
+      const svgEl = document.getElementById('tesseractSvg');
+      if (svgEl) svgEl.style.transform = 'scale(1)';
+      draw4dCanvas();
+    }
+
+    function toggleSideDrawer() {
+      drawerOpen = !drawerOpen;
+      const stage = document.getElementById('mainStageCol');
+      const drawer = document.getElementById('sideDrawerCol');
+      const btn = document.getElementById('btnToggleDrawer');
+      if (drawerOpen) {
+        drawer.classList.remove('hidden');
+        stage.className = 'lg:col-span-8 border-b lg:border-b-0 lg:border-r swiss-border flex flex-col';
+        btn.classList.remove('swiss-btn-active');
+      } else {
+        drawer.classList.add('hidden');
+        stage.className = 'lg:col-span-12 flex flex-col';
+        btn.classList.add('swiss-btn-active');
+      }
+      setTimeout(() => draw4dCanvas(), 20);
+    }
+
+    function switchDockTab(tabKey) {
+      const panels = {
+        dualities: 'dockPanelDualities',
+        faces: 'dockPanelFaces',
+        transitions: 'dockPanelTransitions',
+        subspace: 'dockPanelSubspace'
+      };
+      const btns = {
+        dualities: 'dockTabDualities',
+        faces: 'dockTabFaces',
+        transitions: 'dockTabTransitions',
+        subspace: 'dockTabSubspace'
+      };
+      Object.entries(panels).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (k === tabKey) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+      Object.entries(btns).forEach(([k, id]) => {
+        const b = document.getElementById(id);
+        if (k === tabKey) b.classList.add('swiss-tab-active');
+        else b.classList.remove('swiss-tab-active');
+      });
+    }
+
+    function vertexMatchesFilter(v) {
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'G') return v.coords[0] === 1;
+      if (currentFilter === 'h') return v.coords[1] === 1;
+      if (currentFilter === 'c') return v.coords[2] === 1;
+      if (currentFilter === 'N') return v.coords[3] === 1;
+      if (currentFilter === 'N0') return v.coords[3] === 0;
+      return true;
+    }
+
+    function getActiveHighlightSets() {
+      const nodes = new Set();
+      const edges = new Set();
+      let activeFace = null;
+      let activeDualityKey = null;
+
+      if (selectedType === 'vertex') {
+        nodes.add(selectedId);
+        EDGES.forEach(e => {
+          if (e.u === selectedId || e.v === selectedId) edges.add(e.id);
+        });
+      } else if (selectedType === 'annotation' && ANNOTATIONS[selectedId]) {
+        const ann = ANNOTATIONS[selectedId];
+        (ann.highlightNodes || []).forEach(n => nodes.add(n));
+        (ann.highlightEdges || []).forEach(e => edges.add(e));
+        activeFace = ann.faceId || null;
+        activeDualityKey = selectedId;
+      }
+      return { nodes, edges, activeFace, activeDualityKey };
+    }
+
+    // =========================================================================
+    // 3. TRUE 4-AXIS ROTATION & CUBE-IN-CUBE 4D PROJECTION ENGINE
+    // =========================================================================
+    let autoRotate4d = false;
+    let animFrame4d = null;
+    // Separate 3D Camera Orbit (camYaw, camPitch) from the 4 Fundamental 4D Axis Rotations!
+    //   rotAngles.xw = Axis 1: M(G) 4D rotation (G-W plane)
+    //   rotAngles.yw = Axis 2: L(hbar) 4D rotation (hbar-W plane)
+    //   rotAngles.zw = Axis 3: V(1/c) 4D rotation (1/c-W plane)
+    //   rotAngles.xy = Axis 4: N(k_B) 4D symmetric inside-out inversion
+    let camYaw = -25;
+    let camPitch = 19;
+    let rotAngles = { xw: 0, yw: 0, zw: 0, xy: 0, xz: 0, dist: 1.85 };
+    let isDragging4d = false;
+    let dragMoved4d = false;
+    let lastMouse4d = { x: 0, y: 0 };
+    let lastProjectedNodes4d = [];
+
+    function rotate2D(vec, i, j, deg) {
+      const rad = deg * Math.PI / 180;
+      const c = Math.cos(rad), s = Math.sin(rad);
+      const vi = vec[i], vj = vec[j];
+      vec[i] = vi * c - vj * s;
+      vec[j] = vi * s + vj * c;
+    }
+
+    function project4dVertex(v, W, H) {
+      // Centered 4D coordinates in [-0.5, +0.5]^4:
+      //   p[0] = X = 1/c - 0.5
+      //   p[1] = Y = G - 0.5
+      //   p[2] = Z = hbar - 0.5
+      //   p[3] = W = N - 0.5  (W = -0.5 is Inner cGh Cube, W = +0.5 is Outer N=1 Cube)
+      const p = [
+        v.coords[2] - 0.5,
+        v.coords[0] - 0.5,
+        v.coords[1] - 0.5,
+        v.coords[3] - 0.5
+      ];
+
+      // 1. Axis 1 M(G) Rotation: Rotates Y (G) into W (4th dimension)
+      if (rotAngles.xw !== 0) rotate2D(p, 1, 3, rotAngles.xw);
+      // 2. Axis 2 L(hbar) Rotation: Rotates Z (hbar) into W (4th dimension)
+      if (rotAngles.yw !== 0) rotate2D(p, 2, 3, rotAngles.yw);
+      // 3. Axis 3 V(1/c) Rotation: Rotates X (1/c) into W (4th dimension)
+      if (rotAngles.zw !== 0) rotate2D(p, 0, 3, rotAngles.zw);
+      // 4. Axis 4 N(k_B) Inside-Out Rotation: Clifford double rotation turning Inner cGh Cube & Outer N=1 Cube inside-out!
+      if (rotAngles.xy !== 0) {
+        rotate2D(p, 0, 3, rotAngles.xy);
+        rotate2D(p, 1, 2, rotAngles.xy * 0.5);
+      }
+
+      // Project from 4D to 3D via Schlegel perspective along W (p[3]):
+      // When W = +0.5 (Outer N=1 Cube), wFactor is larger; when W = -0.5 (Inner N=0 cGh Cube), wFactor is smaller!
+      const wFactor = (rotAngles.dist - 0.5) / (rotAngles.dist - p[3]);
+      const p3 = [p[0] * wFactor, p[1] * wFactor, p[2] * wFactor];
+
+      // Apply 3D Camera Orbit (dragged with mouse on canvas)
+      rotate2D(p3, 0, 2, camYaw);
+      rotate2D(p3, 1, 2, camPitch);
+
+      const zFactor = 1 / (3.8 - p3[2] * 0.45);
+      const baseScale = Math.min(W, H) * 1.96 * zoomLevel;
+
+      return {
+        sx: W / 2 + panOffset.x + p3[0] * zFactor * baseScale,
+        sy: H / 2 + panOffset.y - p3[1] * zFactor * baseScale,
+        depth: p3[2],
+        wVal: v.coords[3],
+        v: v
+      };
+    }
+
+    function drawArrowhead(ctx, x1, y1, x2, y2, color, size) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const mx = x1 + (x2 - x1) * 0.62;
+      const my = y1 + (y2 - y1) * 0.62;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(angle);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(size, 0);
+      ctx.lineTo(-size * 0.9, size * 0.65);
+      ctx.lineTo(-size * 0.5, 0);
+      ctx.lineTo(-size * 0.9, -size * 0.65);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawVectorBadge(ctx, x, y, subChar, mainLabel, bgColor) {
+      ctx.save();
+      ctx.font = '700 11px "IBM Plex Mono", monospace';
+      const fullW = ctx.measureText(`e${subChar} · ${mainLabel}`).width + 14;
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(x - fullW / 2, y - 9, fullW, 18);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      let cx = x - fullW / 2 + 6;
+      ctx.font = 'italic 700 11px "IBM Plex Mono", monospace';
+      ctx.fillText('e', cx, y - 1);
+      cx += 7;
+      ctx.font = '700 8.5px "IBM Plex Mono", monospace';
+      ctx.fillText(subChar, cx, y + 3);
+      cx += ctx.measureText(subChar).width + 3;
+      ctx.font = '700 10.5px "D-DIN", "Barlow", sans-serif';
+      ctx.fillText(`· ${mainLabel}`, cx, y);
+      ctx.restore();
+    }
+
+    function draw4dCanvas() {
+      const canvas = document.getElementById('canvas4d');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const dpr = window.devicePixelRatio || 1;
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      const W = rect.width, H = rect.height;
+
+      const isDark = document.body.classList.contains('dark-swiss');
+      ctx.fillStyle = isDark ? '#0D0E11' : '#F4F3EF';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = isDark ? '#262932' : '#D0CEC4';
+      for (let gx = 28; gx < W; gx += 28) {
+        for (let gy = 28; gy < H; gy += 28) {
+          ctx.fillRect(gx, gy, 1.3, 1.3);
+        }
+      }
+
+      const showAxes = document.getElementById('chkAxes').checked;
+      const showTrans = document.getElementById('chkTransitions').checked;
+      const showLoops = document.getElementById('chkLoops').checked;
+      const showDualities = document.getElementById('chkDualities').checked;
+      const showDirArrows = document.getElementById('chkFrontier').checked;
+      const showCoords = document.getElementById('chkCoords').checked;
+
+      const projected = {};
+      VERTICES.forEach(v => {
+        projected[v.id] = project4dVertex(v, W, H);
+      });
+
+      const hl = getActiveHighlightSets();
+
+      // 1. Two Teal Plaquette Faces in 3D/4D Space
+      if (showLoops) {
+        const faces = [
+          { id: 'noether', verts: ['CM', 'SR', 'QFT', 'QM'] },
+          { id: 'compact', verts: ['SD', 'QSGS', 'BHT', 'COSMO'] }
+        ];
+        faces.forEach(f => {
+          const isHighlighted = (hl.activeFace === f.id);
+          const pts = f.verts.map(id => projected[id]);
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(pts[0].sx, pts[0].sy);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+          ctx.closePath();
+          ctx.fillStyle = isHighlighted ? 'rgba(0, 122, 110, 0.28)' : 'rgba(0, 122, 110, 0.08)';
+          ctx.fill();
+          ctx.strokeStyle = isHighlighted ? '#007A6E' : 'rgba(0, 122, 110, 0.5)';
+          ctx.lineWidth = isHighlighted ? 2.8 : 1.3;
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+
+      // 2. All 32 Hypercube Edges
+      EDGES.forEach(e => {
+        const pa = projected[e.u], pb = projected[e.v];
+        const activeFilter = vertexMatchesFilter(pa.v) && vertexMatchesFilter(pb.v);
+        const isEdgeHighlighted = hl.edges.has(e.id);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(pa.sx, pa.sy);
+        ctx.lineTo(pb.sx, pb.sy);
+
+        let strokeColor = '#64748B';
+        let lineW = 1.6;
+        let alpha = activeFilter ? 0.82 : 0.12;
+
+        if (isEdgeHighlighted) {
+          strokeColor = '#FF3300';
+          lineW = 4.4;
+          alpha = 1.0;
+          ctx.setLineDash([]);
+        } else if (pa.wVal === 0 && pb.wVal === 0) {
+          strokeColor = isDark ? '#60A5FA' : '#0047AB';
+          lineW = 2.2;
+          ctx.setLineDash([]);
+        } else if (pa.wVal === 1 && pb.wVal === 1) {
+          strokeColor = isDark ? '#E2E8F0' : '#181818';
+          lineW = 2.0;
+          ctx.setLineDash([]);
+        } else {
+          strokeColor = isDark ? '#FBBF24' : '#D97706';
+          lineW = 1.5;
+          ctx.setLineDash([5, 4]);
+        }
+
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineW;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (showDirArrows && activeFilter) {
+          drawArrowhead(ctx, pa.sx, pa.sy, pb.sx, pb.sy, strokeColor, isEdgeHighlighted ? 6.5 : 4.2);
+        }
+        ctx.restore();
+      });
+
+      // 3. Highlight the 4 Basis Vectors from CM (0,0,0,0)
+      if (showAxes) {
+        const pCM = projected['CM'];
+        const basisTargets = [
+          { to: 'NG', sub: 'G', main: 'M(G)', color: '#DC2626' },
+          { to: 'QM', sub: 'ħ', main: 'L(ħ)', color: '#0047AB' },
+          { to: 'SR', sub: 'c', main: 'V(1/c)', color: '#007A6E' },
+          { to: 'SM', sub: 'N', main: 'N(kB)', color: '#D97706' }
+        ];
+        basisTargets.forEach(b => {
+          const pTo = projected[b.to];
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(pCM.sx, pCM.sy);
+          ctx.lineTo(pTo.sx, pTo.sy);
+          ctx.strokeStyle = b.color;
+          ctx.lineWidth = 3.2;
+          ctx.globalAlpha = 0.88;
+          ctx.stroke();
+          drawArrowhead(ctx, pCM.sx, pCM.sy, pTo.sx, pTo.sy, b.color, 6);
+
+          if (labelMode !== 'none' && labelMode !== 'hover') {
+            const mx = pCM.sx + (pTo.sx - pCM.sx) * 0.48;
+            const my = pCM.sy + (pTo.sy - pCM.sy) * 0.48;
+            drawVectorBadge(ctx, mx, my, b.sub, b.main, b.color);
+          }
+          ctx.restore();
+        });
+      }
+
+      // 4. Six Directed Transition Labels along Edges
+      if (showTrans && labelMode !== 'none') {
+        const transList = [
+          { u: 'NG', v: 'GR', label: 'PN / GEM', key: 'pngem' },
+          { u: 'QM', v: 'QFT', label: 'RQM', key: 'rqm' },
+          { u: 'GR', v: 'QG', label: 'QFTCS', key: 'qftcs' },
+          { u: 'QFT', v: 'QG', label: 'EFT of Gravity', key: 'eft' },
+          { u: 'QM', v: 'QSM', label: 'Open Q.Sys / ETH', key: 'eth' },
+          { u: 'COSMO', v: 'BHT', label: 'Cosmic Inflation', key: 'inflation' }
+        ];
+        transList.forEach(t => {
+          const isSel = (selectedId === t.key);
+          if (!isSel && labelMode !== 'box') return; // Only show edge badges when selected or in full box mode so canvas stays super clean!
+          const pa = projected[t.u], pb = projected[t.v];
+          const mx = (pa.sx + pb.sx) / 2;
+          const my = (pa.sy + pb.sy) / 2;
+          ctx.save();
+          ctx.font = '700 10px "IBM Plex Mono", monospace';
+          const tw = ctx.measureText(t.label).width + 8;
+          ctx.fillStyle = isSel ? '#FF3300' : (isDark ? 'rgba(20,22,27,0.88)' : 'rgba(255,255,255,0.88)');
+          ctx.strokeStyle = '#FF3300';
+          ctx.lineWidth = isSel ? 2 : 1;
+          ctx.fillRect(mx - tw / 2, my - 7.5, tw, 15);
+          ctx.strokeRect(mx - tw / 2, my - 7.5, tw, 15);
+          ctx.fillStyle = isSel ? '#FFFFFF' : '#FF3300';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(t.label, mx, my);
+          ctx.restore();
+        });
+      }
+
+      // 5. Five Exact Orange Dualities
+      if (showDualities) {
+        const drawDualityCurve = (x1, y1, x2, y2, label, key, bendOffset) => {
+          const isSelectedDuality = (hl.activeDualityKey === key);
+          const anyDualitySelected = ['adscft', 'adscmt', 'wick', 'erepr', 'doublecopy'].includes(hl.activeDualityKey);
+          if (anyDualitySelected && !isSelectedDuality && labelMode !== 'box') return;
+          const alpha = isSelectedDuality ? 1.0 : (anyDualitySelected ? 0.16 : 0.65);
+
+          const mx = (x1 + x2) / 2 + bendOffset.dx;
+          const my = (y1 + y2) / 2 + bendOffset.dy;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.quadraticCurveTo(mx, my, x2, y2);
+          ctx.strokeStyle = '#FF3300';
+          ctx.lineWidth = isSelectedDuality ? 3.5 : 1.6;
+          ctx.setLineDash(isSelectedDuality ? [] : [4, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = '#FF3300';
+          ctx.beginPath(); ctx.arc(x1, y1, isSelectedDuality ? 5.5 : 3.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x2, y2, isSelectedDuality ? 5.5 : 3.5, 0, Math.PI * 2); ctx.fill();
+
+          if (labelMode !== 'none' && (isSelectedDuality || labelMode === 'box')) {
+            const bx = 0.25 * x1 + 0.5 * mx + 0.25 * x2;
+            const by = 0.25 * y1 + 0.5 * my + 0.25 * y2;
+            ctx.font = `${isSelectedDuality ? '800 11.5px' : '700 10px'} "D-DIN", "Barlow", sans-serif`;
+            const tw = ctx.measureText(label).width + 12;
+            ctx.fillStyle = isSelectedDuality ? '#FF3300' : (isDark ? '#14161B' : '#FFF7ED');
+            ctx.strokeStyle = '#FF3300';
+            ctx.lineWidth = isSelectedDuality ? 2 : 1.1;
+            ctx.fillRect(bx - tw / 2, by - 9, tw, 18);
+            ctx.strokeRect(bx - tw / 2, by - 9, tw, 18);
+            ctx.fillStyle = isSelectedDuality ? '#FFFFFF' : '#FF3300';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, bx, by);
+          }
+          ctx.restore();
+        };
+
+        const mQGBHT = {
+          x: (projected['QG'].sx + projected['BHT'].sx) / 2,
+          y: (projected['QG'].sy + projected['BHT'].sy) / 2
+        };
+        const mQFTTQFT = {
+          x: (projected['QFT'].sx + projected['TQFT'].sx) / 2,
+          y: (projected['QFT'].sy + projected['TQFT'].sy) / 2
+        };
+        drawDualityCurve(mQGBHT.x, mQGBHT.y, mQFTTQFT.x, mQFTTQFT.y, 'AdS / CFT', 'adscft', { dx: 70, dy: 0 });
+        drawDualityCurve(projected['QSM'].sx, projected['QSM'].sy, projected['BHT'].sx, projected['BHT'].sy, 'AdS / CMT', 'adscmt', { dx: 60, dy: 70 });
+        drawDualityCurve(projected['SM'].sx, projected['SM'].sy, projected['QM'].sx, projected['QM'].sy, 'Wick Rotation', 'wick', { dx: -65, dy: 20 });
+        drawDualityCurve(projected['QM'].sx, projected['QM'].sy, projected['GR'].sx, projected['GR'].sy, 'ER = EPR', 'erepr', { dx: -30, dy: -45 });
+
+        const mGRQG = {
+          x: (projected['GR'].sx + projected['QG'].sx) / 2,
+          y: (projected['GR'].sy + projected['QG'].sy) / 2
+        };
+        drawDualityCurve(mGRQG.x, mGRQG.y, projected['QFT'].sx, projected['QFT'].sy, 'Double Copy', 'doublecopy', { dx: 45, dy: -35 });
+      }
+
+      // 6. All 16 Vertex Nodes with Unobtrusive Radially Offset Labels
+      lastProjectedNodes4d = [];
+      const cxCenter = W / 2 + panOffset.x;
+      const cyCenter = H / 2 + panOffset.y;
+      const sortedNodes = Object.values(projected).sort((a, b) => a.depth - b.depth);
+
+      sortedNodes.forEach(item => {
+        const v = item.v;
+        const activeFilter = vertexMatchesFilter(v);
+        const isHighlighted = hl.nodes.has(v.id) || (hoveredVertexId === v.id);
+        const isInner = (item.wVal === 0);
+
+        ctx.save();
+        ctx.globalAlpha = activeFilter ? 1.0 : 0.18;
+
+        const r = isHighlighted ? 7.5 : 5.2;
+        ctx.fillStyle = isHighlighted ? '#FF3300' : (isInner ? '#0047AB' : '#111111');
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(item.sx, item.sy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        const shouldShowLabel =
+          (labelMode === 'clean' || labelMode === 'box') ||
+          (labelMode === 'hover' && isHighlighted);
+
+        let hitBox = { id: v.id, x1: item.sx - 12, y1: item.sy - 12, x2: item.sx + 12, y2: item.sy + 12 };
+
+        if (shouldShowLabel) {
+          const dx = item.sx - cxCenter;
+          const dy = item.sy - cyCenter;
+          const dist = Math.hypot(dx, dy) || 1;
+          const ux = dx / dist;
+          const uy = dy / dist;
+
+          const coordText = showCoords ? ` (${v.coords.join('')})` : '';
+          const labelStr = `${v.label}${coordText}`;
+          ctx.font = `${isHighlighted ? '800 12px' : '700 11px'} "D-DIN", "Barlow", sans-serif`;
+          const tw = ctx.measureText(labelStr).width + 10;
+          const th = 18;
+
+          const offsetDist = isInner ? 16 : 20;
+          const lx = item.sx + ux * offsetDist - (ux < -0.25 ? tw / 2 : (ux > 0.25 ? -tw / 2 : 0));
+          const ly = item.sy + uy * offsetDist;
+
+          if (labelMode === 'clean' && !isHighlighted) {
+            ctx.lineWidth = 3.2;
+            ctx.strokeStyle = isDark ? 'rgba(13,14,17,0.88)' : 'rgba(244,243,239,0.92)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(labelStr, lx, ly);
+            ctx.fillStyle = isInner ? (isDark ? '#60A5FA' : '#0047AB') : (isDark ? '#F3F4F6' : '#111111');
+            ctx.fillText(labelStr, lx, ly);
+          } else {
+            const bx = lx - tw / 2;
+            const by = ly - th / 2;
+            ctx.fillStyle = isHighlighted ? '#FF3300' : (isDark ? 'rgba(24,27,34,0.92)' : 'rgba(255,255,255,0.92)');
+            ctx.strokeStyle = isHighlighted ? '#FF3300' : (isInner ? '#0047AB' : '#111111');
+            ctx.lineWidth = isHighlighted ? 2.0 : 1.1;
+            ctx.fillRect(bx, by, tw, th);
+            ctx.strokeRect(bx, by, tw, th);
+            ctx.fillStyle = isHighlighted ? '#FFFFFF' : (isDark ? '#F8FAFC' : '#111111');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelStr, lx, ly);
+          }
+
+          hitBox = {
+            id: v.id,
+            x1: Math.min(item.sx - 10, lx - tw / 2),
+            y1: Math.min(item.sy - 10, ly - th / 2),
+            x2: Math.max(item.sx + 10, lx + tw / 2),
+            y2: Math.max(item.sy + 10, ly + th / 2)
+          };
+        }
+
+        ctx.restore();
+        lastProjectedNodes4d.push(hitBox);
+      });
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 4. VIEW 02: ORTHOGONAL 2D VECTOR SVG RENDERER (RESPECTS LABEL MODE!)
+    // =========================================================================
+    function renderSvgDiagram() {
+      const loopsGroup = document.getElementById('layerLoops');
+      const axesGroup = document.getElementById('layerAxes');
+      const frontierGroup = document.getElementById('layerFrontier');
+      const edgesGroup = document.getElementById('layerEdges');
+      const transGroup = document.getElementById('layerTransitions');
+      const dualGroup = document.getElementById('layerDualities');
+      const verticesGroup = document.getElementById('layerVertices');
+
+      const showAxes = document.getElementById('chkAxes').checked;
+      const showTrans = document.getElementById('chkTransitions').checked;
+      const showLoops = document.getElementById('chkLoops').checked;
+      const showDualities = document.getElementById('chkDualities').checked;
+      const showDirArrows = document.getElementById('chkFrontier').checked;
+      const showCoords = document.getElementById('chkCoords').checked;
+
+      const vMap = {};
+      VERTICES.forEach(v => { vMap[v.id] = v; });
+      const hl = getActiveHighlightSets();
+      const isDark = (currentSvgTheme === 'dark');
+
+      if (showLoops) {
+        const noetherActive = (hl.activeFace === 'noether');
+        const compactActive = (hl.activeFace === 'compact');
+        const pN = ['CM', 'SR', 'QFT', 'QM'].map(id => `${vMap[id].x},${vMap[id].y}`).join(' ');
+        const pC = ['SD', 'QSGS', 'BHT', 'COSMO'].map(id => `${vMap[id].x},${vMap[id].y}`).join(' ');
+
+        loopsGroup.innerHTML = `
+          <g class="svg-interactive" onclick="selectAnnotation('noether')">
+            <polygon points="${pN}" fill="#007A6E" fill-opacity="${noetherActive ? 0.28 : 0.11}" stroke="#007A6E" stroke-width="${noetherActive ? 3.2 : 1.8}" stroke-dasharray="8,5"/>
+            <rect x="24" y="310" width="190" height="44" fill="${noetherActive ? '#007A6E' : '#FAF9F6'}" stroke="#007A6E" stroke-width="1.5"/>
+            <text x="119" y="329" text-anchor="middle" font-size="12" font-weight="800" fill="${noetherActive ? '#FFFFFF' : '#007A6E'}">NOETHER'S SYMMETRY</text>
+            <text x="119" y="345" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="${noetherActive ? '#E6FFFA' : '#111111'}">Face: CM–SR–QFT–QM</text>
+            <line x1="214" y1="332" x2="310" y2="430" stroke="#007A6E" stroke-width="1.8" marker-end="url(#arrowTeal)"/>
+          </g>
+          <g class="svg-interactive" onclick="selectAnnotation('compact')">
+            <polygon points="${pC}" fill="#007A6E" fill-opacity="${compactActive ? 0.28 : 0.11}" stroke="#007A6E" stroke-width="${compactActive ? 3.2 : 1.8}" stroke-dasharray="8,5"/>
+            <rect x="815" y="310" width="225" height="44" fill="${compactActive ? '#007A6E' : '#FAF9F6'}" stroke="#007A6E" stroke-width="1.5"/>
+            <text x="927" y="329" text-anchor="middle" font-size="11.5" font-weight="800" fill="${compactActive ? '#FFFFFF' : '#007A6E'}">COMPACT OBJECTS PHASE (ACOPD)</text>
+            <text x="927" y="345" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="${compactActive ? '#E6FFFA' : '#111111'}">Face: SD–QSGS–BHT–Cosmo</text>
+            <line x1="815" y1="332" x2="710" y2="410" stroke="#007A6E" stroke-width="1.8" marker-end="url(#arrowTeal)"/>
+          </g>
+        `;
+      } else {
+        loopsGroup.innerHTML = '';
+      }
+
+      if (showAxes) {
+        const cm = vMap['CM'];
+        axesGroup.innerHTML = `
+          <line x1="${cm.x}" y1="${cm.y}" x2="315" y2="132" stroke="#F59E0B" stroke-width="12" stroke-linecap="round" opacity="0.35" marker-end="url(#arrowYellow)"/>
+          <line x1="${cm.x}" y1="${cm.y}" x2="840" y2="175" stroke="#F59E0B" stroke-width="10" stroke-linecap="round" opacity="0.28" marker-end="url(#arrowYellow)"/>
+          <line x1="${cm.x}" y1="${cm.y}" x2="840" y2="755" stroke="#F59E0B" stroke-width="10" stroke-linecap="round" opacity="0.28" marker-end="url(#arrowYellow)"/>
+          <line x1="${cm.x}" y1="${cm.y}" x2="315" y2="798" stroke="#F59E0B" stroke-width="12" stroke-linecap="round" opacity="0.35" marker-end="url(#arrowYellow)"/>
+          <text x="330" y="120" font-size="24" font-weight="800" fill="#DC2626">M <tspan font-family="IBM Plex Mono, monospace" font-size="15">(G)</tspan></text>
+          <text x="855" y="175" font-size="24" font-weight="800" fill="#0047AB">L <tspan font-family="IBM Plex Mono, monospace" font-size="15">(ħ)</tspan></text>
+          <text x="855" y="765" font-size="24" font-weight="800" fill="#007A6E">V <tspan font-family="IBM Plex Mono, monospace" font-size="15">(1/c)</tspan></text>
+          <text x="330" y="820" font-size="24" font-weight="800" fill="#D97706">N <tspan font-family="IBM Plex Mono, monospace" font-size="15">(k<tspan dy="4" font-size="11">B</tspan>)</tspan></text>
+        `;
+      } else {
+        axesGroup.innerHTML = '';
+      }
+
+      frontierGroup.innerHTML = '';
+
+      let edgesHtml = '';
+      EDGES.forEach(e => {
+        const va = vMap[e.u], vb = vMap[e.v];
+        const activeBoth = vertexMatchesFilter(va) && vertexMatchesFilter(vb);
+        const isHighlighted = hl.edges.has(e.id);
+
+        let stroke = isDark ? '#94A3B8' : '#262626';
+        let width = e.dashed ? 1.3 : 1.7;
+        let opacity = activeBoth ? (e.dashed ? 0.6 : 0.85) : 0.12;
+
+        if (showDirArrows && !isHighlighted) {
+          stroke = AXIS_COLORS[e.axis];
+        }
+        if (isHighlighted) {
+          stroke = '#FF3300';
+          width = 4.5;
+          opacity = 1.0;
+        }
+
+        const dashAttr = (e.dashed && !isHighlighted) ? 'stroke-dasharray="6,5"' : '';
+        const markerAttr = showDirArrows ? 'marker-end="url(#arrowDark)"' : '';
+        edgesHtml += `<line x1="${va.x}" y1="${va.y}" x2="${vb.x}" y2="${vb.y}" stroke="${stroke}" stroke-width="${width}" opacity="${opacity}" ${dashAttr} ${markerAttr}/>`;
+      });
+      edgesGroup.innerHTML = edgesHtml;
+
+      if (showTrans && labelMode !== 'none') {
+        const transItems = [
+          { u: 'NG', v: 'GR', label: 'PN / GEM', key: 'pngem', dy: -10 },
+          { u: 'QM', v: 'QFT', label: 'RQM', key: 'rqm', dy: -10 },
+          { u: 'GR', v: 'QG', label: 'QFTCS', key: 'qftcs', dy: -10 },
+          { u: 'QFT', v: 'QG', label: 'EFT of Gravity', key: 'eft', dy: 14 },
+          { u: 'QM', v: 'QSM', label: 'Open Q.Sys / ETH', key: 'eth', dy: -10 },
+          { u: 'COSMO', v: 'BHT', label: 'Cosmic Inflation', key: 'inflation', dy: 14 }
+        ];
+        transGroup.innerHTML = transItems.map(t => {
+          const va = vMap[t.u], vb = vMap[t.v];
+          const mx = (va.x + vb.x) / 2;
+          const my = (va.y + vb.y) / 2;
+          const angle = Math.atan2(vb.y - va.y, vb.x - va.x) * 180 / Math.PI;
+          const isSel = (selectedId === t.key);
+          if (labelMode === 'hover' && !isSel) return '';
+          return `
+            <g class="svg-interactive" onclick="selectAnnotation('${t.key}')">
+              <line x1="${va.x}" y1="${va.y}" x2="${vb.x}" y2="${vb.y}" stroke="#FF3300" stroke-width="${isSel ? 4.5 : 2.5}" marker-end="url(#arrowRed)"/>
+              <g transform="translate(${mx}, ${my}) rotate(${angle})">
+                <rect x="-52" y="${t.dy - 9}" width="104" height="16" fill="${isSel ? '#FF3300' : '#FAF9F6'}" stroke="#FF3300" stroke-width="1"/>
+                <text x="0" y="${t.dy + 2}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="700" fill="${isSel ? '#FFFFFF' : '#FF3300'}">${t.label}</text>
+              </g>
+            </g>
+          `;
+        }).join('');
+      } else {
+        transGroup.innerHTML = '';
+      }
+
+      if (showDualities) {
+        const mQGBHT = { x: (vMap['QG'].x + vMap['BHT'].x) / 2, y: (vMap['QG'].y + vMap['BHT'].y) / 2 };
+        const mQFTTQFT = { x: (vMap['QFT'].x + vMap['TQFT'].x) / 2, y: (vMap['QFT'].y + vMap['TQFT'].y) / 2 };
+        const mGRQG = { x: (vMap['GR'].x + vMap['QG'].x) / 2, y: (vMap['GR'].y + vMap['QG'].y) / 2 };
+
+        const dualList = [
+          { key: 'adscft', title: 'AdS / CFT', sub: 'QG–BHT ↔ QFT–Thermo', bx: 945, by: 535, p1: mQGBHT, p2: mQFTTQFT },
+          { key: 'adscmt', title: 'AdS / CMT', sub: 'QSM ↔ BHT', bx: 935, by: 645, p1: vMap['QSM'], p2: vMap['BHT'] },
+          { key: 'wick', title: 'Wick Rotation', sub: 'SM ↔ QM', bx: 115, by: 625, p1: vMap['SM'], p2: vMap['QM'] },
+          { key: 'erepr', title: 'ER = EPR', sub: 'QM ↔ GR', bx: 415, by: 195, p1: vMap['QM'], p2: vMap['GR'] },
+          { key: 'doublecopy', title: 'Double Copy', sub: 'GR–QG ↔ QFT', bx: 745, by: 105, p1: mGRQG, p2: vMap['QFT'] }
+        ];
+
+        const anyDualSel = ['adscft', 'adscmt', 'wick', 'erepr', 'doublecopy'].includes(hl.activeDualityKey);
+        dualGroup.innerHTML = dualList.map(d => {
+          const isSel = (hl.activeDualityKey === d.key);
+          const op = isSel ? 1.0 : (anyDualSel ? 0.25 : 0.85);
+          const sw = isSel ? 3.4 : 1.8;
+          return `
+            <g class="svg-interactive" opacity="${op}" onclick="selectAnnotation('${d.key}')">
+              <path d="M ${d.p1.x},${d.p1.y} Q ${d.bx},${d.by} ${d.p2.x},${d.p2.y}" fill="none" stroke="#FF3300" stroke-width="${sw}" ${isSel ? '' : 'stroke-dasharray="5,4"'} marker-start="url(#arrowOrange)" marker-end="url(#arrowOrange)"/>
+              <rect x="${d.bx - 78}" y="${d.by - 20}" width="156" height="38" fill="${isSel ? '#FF3300' : '#FAF9F6'}" stroke="#FF3300" stroke-width="${isSel ? 2.2 : 1.4}"/>
+              <text x="${d.bx}" y="${d.by - 3}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${isSel ? '#FFFFFF' : '#FF3300'}">${d.title}</text>
+              <text x="${d.bx}" y="${d.by + 12}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="${isSel ? '#FFF7ED' : '#111111'}">${d.sub}</text>
+            </g>
+          `;
+        }).join('');
+      } else {
+        dualGroup.innerHTML = '';
+      }
+
+      let nodesHtml = '';
+      VERTICES.forEach(v => {
+        const active = vertexMatchesFilter(v);
+        const isHighlighted = hl.nodes.has(v.id);
+        const isInner = (v.coords[3] === 0);
+        const opacity = active ? 1.0 : 0.2;
+
+        const boxFill = isHighlighted ? '#FF3300' : (isDark ? '#14161B' : '#FFFFFF');
+        const boxStroke = isHighlighted ? '#FF3300' : (isInner ? '#0047AB' : '#111111');
+        const textFill = isHighlighted ? '#FFFFFF' : (isDark ? '#F3F4F6' : '#111111');
+
+        const showThisLabel = (labelMode === 'clean' || labelMode === 'box') || (labelMode === 'hover' && isHighlighted);
+        if (!showThisLabel) {
+          nodesHtml += `
+            <g class="svg-interactive" opacity="${opacity}" onclick="selectVertex('${v.id}')">
+              <circle cx="${v.x}" cy="${v.y}" r="${isHighlighted ? 8 : 5.5}" fill="${isHighlighted ? '#FF3300' : boxStroke}" stroke="#FFFFFF" stroke-width="1.5"/>
+            </g>
+          `;
+          return;
+        }
+
+        const maxChars = Math.max(...v.lines.map(s => s.length));
+        const boxW = Math.max(62, maxChars * 8.2 + 18);
+        const boxH = v.lines.length * 16 + (showCoords ? 15 : 2) + 8;
+
+        let bx = v.x - boxW / 2;
+        let by = v.y - boxH - 10;
+        if (v.labelPos === 'left') { bx = v.x - boxW - 10; by = v.y - boxH / 2; }
+        else if (v.labelPos === 'right') { bx = v.x + 10; by = v.y - boxH / 2; }
+        else if (v.labelPos === 'bottom') { bx = v.x - boxW / 2; by = v.y + 10; }
+        else if (v.labelPos === 'top-left') { bx = v.x - boxW - 6; by = v.y - boxH - 6; }
+        else if (v.labelPos === 'bottom-left') { bx = v.x - boxW - 6; by = v.y + 6; }
+        else if (v.labelPos === 'top-right') { bx = v.x + 6; by = v.y - boxH - 6; }
+        else if (v.labelPos === 'bottom-right') { bx = v.x + 6; by = v.y + 6; }
+
+        let textLinesSvg = '';
+        v.lines.forEach((lineStr, idx) => {
+          const ty = by + 15 + idx * 15;
+          textLinesSvg += `<text x="${bx + boxW / 2}" y="${ty}" text-anchor="middle" font-size="12.5" font-weight="800" fill="${textFill}">${lineStr}</text>`;
+        });
+
+        if (showCoords) {
+          const cy = by + 14 + v.lines.length * 15;
+          const coordColor = isHighlighted ? '#FFE4E6' : (isInner ? '#0047AB' : '#007A6E');
+          textLinesSvg += `<text x="${bx + boxW / 2}" y="${cy}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="700" fill="${coordColor}">(${v.coords.join(',')})</text>`;
+        }
+
+        nodesHtml += `
+          <g class="svg-interactive" opacity="${opacity}" onclick="selectVertex('${v.id}')">
+            <circle cx="${v.x}" cy="${v.y}" r="${isHighlighted ? 7.5 : 5}" fill="${isHighlighted ? '#FF3300' : boxStroke}" stroke="#FFFFFF" stroke-width="1.5"/>
+            <rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" fill="${boxFill}" stroke="${boxStroke}" stroke-width="${isHighlighted ? 2.5 : 1.6}"/>
+            ${textLinesSvg}
+          </g>
+        `;
+      });
+      verticesGroup.innerHTML = nodesHtml;
+    }
+
+    // =========================================================================
+    // 5. SELECTION & INSPECTOR HANDLERS (PURE NATIVE HTML MATH!)
+    // =========================================================================
+    function updateAcopdPreviewVisibility(idOrKey) {
+      const acopdRelated = new Set(['compact', 'SD', 'QSGS', 'COSMO', 'BHT', 'main_sequence', 'white_dwarf', 'black_dwarf', 'neutron_star', 'grhd_star', 'black_hole']);
+      const el = document.getElementById('inspectorAcopdPreview');
+      if (acopdRelated.has(idOrKey)) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    }
+
+    function updateQuickDualityButtons() {
+      document.querySelectorAll('.duality-card-btn').forEach(btn => {
+        if (btn.dataset.key === selectedId && selectedType === 'annotation') {
+          btn.classList.add('swiss-btn-active');
+        } else {
+          btn.classList.remove('swiss-btn-active');
+        }
+      });
+    }
+
+    function selectVertex(vertexId) {
+      selectedId = vertexId;
+      selectedType = 'vertex';
+      const v = VERTICES.find(item => item.id === vertexId);
+      if (!v) return;
+
+      const cubeTag = v.coords[3] === 0 ? 'INNER cGh CUBE (N=0)' : 'OUTER STATISTICAL CUBE (N=1)';
+      document.getElementById('inspectorBadge').textContent = `${cubeTag} · W=${v.weight}`;
+      document.getElementById('inspectorCoord').textContent = `(${v.coords.join(', ')})`;
+      document.getElementById('inspectorTitle').textContent = v.label;
+      document.getElementById('inspectorSub').textContent = `${v.en} · ${v.zh}`;
+      document.getElementById('inspectorDesc').innerHTML = v.descHtml;
+      document.getElementById('inspectorFormula').innerHTML = v.formulaHtml;
+
+      const paramMeta = [
+        { html: '<i>M</i>(<i>G</i>)', desc: '引力', on: v.coords[0] },
+        { html: '<i>L</i>(<i>ħ</i>)', desc: '量子', on: v.coords[1] },
+        { html: `<i>V</i>(${frac('1','<i>c</i>')})`, desc: '相对论', on: v.coords[2] },
+        { html: '<i>N</i>(<i>k</i><sub class="m-sub">B</sub>)', desc: '多体统计', on: v.coords[3] }
+      ];
+      const gridEl = document.getElementById('inspectorParamsGrid');
+      gridEl.style.display = 'grid';
+      gridEl.innerHTML = paramMeta.map(p => `
+        <div class="p-1.5 border swiss-border text-center ${p.on ? 'bg-neutral-900 text-white' : 'opacity-45'}">
+          <div class="text-xs font-bold">${p.html} = ${p.on}</div>
+          <div class="text-[10px]">${p.desc}${p.on ? '开启' : '关闭'}</div>
+        </div>
+      `).join('');
+
+      const neighborsWrap = document.getElementById('inspectorNeighborsWrap');
+      neighborsWrap.style.display = 'block';
+      const axisHtml = [
+        `${vec('e')}<sub class="m-sub">G</sub>`,
+        `${vec('e')}<sub class="m-sub">ħ</sub>`,
+        `${vec('e')}<sub class="m-sub">c</sub>`,
+        `${vec('e')}<sub class="m-sub">N</sub>`
+      ];
+      const neighborBtns = [];
+      EDGES.forEach(e => {
+        if (e.u === v.id || e.v === v.id) {
+          const otherId = e.u === v.id ? e.v : e.u;
+          const otherV = VERTICES.find(x => x.id === otherId);
+          const sign = (otherV.weight > v.weight) ? '+' : '−';
+          neighborBtns.push(`
+            <button onclick="selectVertex('${otherV.id}')" class="swiss-btn px-2.5 py-1 text-xs font-bold flex items-center gap-1.5">
+              <span>${otherV.label}</span>
+              <span class="opacity-80">(${sign}${axisHtml[e.axis]})</span>
+            </button>
+          `);
+        }
+      });
+      document.getElementById('inspectorNeighbors').innerHTML = neighborBtns.join('');
+
+      updateAcopdPreviewVisibility(vertexId);
+      updateQuickDualityButtons();
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function selectAnnotation(key) {
+      const item = ANNOTATIONS[key];
+      if (!item) return;
+      selectedId = key;
+      selectedType = 'annotation';
+      document.getElementById('inspectorBadge').textContent = item.badge;
+      document.getElementById('inspectorCoord').textContent = item.coord;
+      document.getElementById('inspectorTitle').textContent = item.title;
+      document.getElementById('inspectorSub').textContent = item.sub;
+      document.getElementById('inspectorDesc').innerHTML = item.descHtml;
+      document.getElementById('inspectorFormula').innerHTML = item.formulaHtml;
+      document.getElementById('inspectorParamsGrid').style.display = 'none';
+
+      const neighborsWrap = document.getElementById('inspectorNeighborsWrap');
+      if (item.highlightNodes && item.highlightNodes.length > 0) {
+        neighborsWrap.style.display = 'block';
+        document.getElementById('inspectorNeighbors').innerHTML = item.highlightNodes.map(nid => {
+          const nv = VERTICES.find(x => x.id === nid);
+          return `<button onclick="selectVertex('${nv.id}')" class="swiss-btn px-2.5 py-1 text-xs font-bold mono">${nv.label} (${nv.coords.join('')})</button>`;
+        }).join('');
+      } else {
+        neighborsWrap.style.display = 'none';
+      }
+
+      updateAcopdPreviewVisibility(key);
+      updateQuickDualityButtons();
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function selectCompactObject(objKey) {
+      const info = COMPACT_OBJECTS_INFO[objKey];
+      if (!info) return;
+      document.getElementById('inspectorBadge').textContent = info.badge;
+      document.getElementById('inspectorCoord').textContent = info.coord;
+      document.getElementById('inspectorTitle').textContent = info.title;
+      document.getElementById('inspectorSub').textContent = info.sub;
+      document.getElementById('inspectorDesc').innerHTML = info.descHtml;
+      document.getElementById('inspectorFormula').innerHTML = info.formulaHtml;
+      document.getElementById('inspectorParamsGrid').style.display = 'none';
+      updateAcopdPreviewVisibility(objKey);
+    }
+
+    function setParamFilter(filterKey) {
+      currentFilter = filterKey;
+      const btnMap = {
+        all: 'filterAll', G: 'filterG', h: 'filterH',
+        c: 'filterC', N: 'filterN', N0: 'filterBronstein3D'
+      };
+      Object.entries(btnMap).forEach(([k, btnId]) => {
+        const el = document.getElementById(btnId);
+        if (k === filterKey) el.classList.add('swiss-btn-active');
+        else el.classList.remove('swiss-btn-active');
+      });
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function updateSvgLayers() {
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function setSvgTheme(theme) {
+      currentSvgTheme = theme;
+      const bgRect = document.getElementById('svgBgRect');
+      const gridRect = document.getElementById('svgGridRect');
+      const titleText = document.getElementById('svgTitleText');
+      const subText = document.getElementById('svgSubtitleText');
+      const legendBg = document.getElementById('svgLegendBg');
+      const legendTitle = document.getElementById('svgLegendTitle');
+
+      if (theme === 'dark') {
+        document.body.classList.add('dark-swiss');
+        bgRect.setAttribute('fill', '#0D0E11');
+        gridRect.setAttribute('fill', 'url(#dotGridDark)');
+        titleText.setAttribute('fill', '#F3F4F6');
+        subText.setAttribute('fill', '#9CA3AF');
+        legendBg.setAttribute('fill', '#14161B');
+        legendTitle.setAttribute('fill', '#F3F4F6');
+      } else if (theme === 'print') {
+        document.body.classList.remove('dark-swiss');
+        bgRect.setAttribute('fill', '#FFFFFF');
+        gridRect.setAttribute('fill', 'url(#dotGridPrint)');
+        titleText.setAttribute('fill', '#111111');
+        subText.setAttribute('fill', '#4B5563');
+        legendBg.setAttribute('fill', '#FFFFFF');
+        legendTitle.setAttribute('fill', '#111111');
+      } else {
+        document.body.classList.remove('dark-swiss');
+        bgRect.setAttribute('fill', '#F4F3EF');
+        gridRect.setAttribute('fill', 'url(#dotGridPaper)');
+        titleText.setAttribute('fill', '#111111');
+        subText.setAttribute('fill', '#5A5852');
+        legendBg.setAttribute('fill', '#FAF9F6');
+        legendTitle.setAttribute('fill', '#111111');
+      }
+      renderSvgDiagram();
+      draw4dCanvas();
+    }
+
+    function resetSelection() {
+      setParamFilter('all');
+      selectVertex('BHT');
+    }
+
+    function populateCategorizedDockAndRightLists() {
+      const dualKeys = ['adscft', 'adscmt', 'wick', 'erepr', 'doublecopy'];
+      document.getElementById('dockPanelDualities').innerHTML = dualKeys.map((k, idx) => {
+        const a = ANNOTATIONS[k];
+        return `
+          <button data-key="${k}" onclick="selectAnnotation('${k}')" class="duality-card-btn swiss-btn p-2.5 text-left flex flex-col justify-between">
+            <div class="flex items-center justify-between w-full mb-1">
+              <span class="mono text-[10px] font-bold opacity-75">0${idx + 1} · DUALITY</span>
+              <span class="w-2 h-2 rounded-full" style="background:#FF3300;"></span>
+            </div>
+            <div class="font-extrabold text-xs">${a.title.split('(')[0]}</div>
+            <div class="mono text-[10px] opacity-80 mt-1">${a.shortSub}</div>
+          </button>
+        `;
+      }).join('');
+
+      const faceKeys = ['noether', 'compact'];
+      document.getElementById('dockPanelFaces').innerHTML = faceKeys.map((k, idx) => {
+        const a = ANNOTATIONS[k];
+        return `
+          <button data-key="${k}" onclick="selectAnnotation('${k}')" class="duality-card-btn swiss-btn p-3 text-left flex flex-col justify-between">
+            <div class="flex items-center justify-between w-full mb-1">
+              <span class="mono text-[10px] font-bold opacity-75">PLAQUETTE 0${idx + 1} · 2D FACE</span>
+              <span class="mono text-[10px] font-bold px-1.5 py-0.5 text-white" style="background:#007A6E;">${a.coord}</span>
+            </div>
+            <div class="font-extrabold text-sm">${a.title}</div>
+            <div class="text-xs opacity-85 mt-1">${a.sub}</div>
+          </button>
+        `;
+      }).join('');
+
+      const transKeys = ['pngem', 'rqm', 'qftcs', 'eft', 'eth', 'inflation'];
+      document.getElementById('dockPanelTransitions').innerHTML = transKeys.map((k, idx) => {
+        const a = ANNOTATIONS[k];
+        return `
+          <button data-key="${k}" onclick="selectAnnotation('${k}')" class="duality-card-btn swiss-btn p-2 text-left flex flex-col justify-between">
+            <span class="mono text-[10px] font-bold opacity-70">EDGE 0${idx + 1}</span>
+            <div class="font-extrabold text-xs mt-0.5">${a.title.split('(')[0]}</div>
+            <div class="mono text-[10px] opacity-80 mt-1">${a.shortSub}</div>
+          </button>
+        `;
+      }).join('');
+
+      const weightContainer = document.getElementById('weightLayersList');
+      let html = '';
+      for (let w = 0; w <= 4; w++) {
+        const vs = VERTICES.filter(v => v.weight === w);
+        html += `
+          <div class="flex items-start gap-2 py-1 border-b swiss-border-subtle">
+            <span class="mono text-[10px] font-bold px-1.5 py-0.5 border swiss-border shrink-0 mt-0.5">W=${w}</span>
+            <div class="flex flex-wrap gap-1">
+              ${vs.map(v => `
+                <button onclick="selectVertex('${v.id}')" class="swiss-btn px-2 py-0.5 text-[11px] font-bold">
+                  ${v.label}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+      weightContainer.innerHTML = html;
+
+      const basisItems = [
+        { html: `+${vec('e')}<sub class="m-sub">G</sub> : <i>M</i>(<i>G</i>)`, color: '#DC2626', desc: '牛顿引力常数 (Gravity)' },
+        { html: `+${vec('e')}<sub class="m-sub">ħ</sub> : <i>L</i>(<i>ħ</i>)`, color: '#0047AB', desc: '约化普朗克常数 (Quantum)' },
+        { html: `+${vec('e')}<sub class="m-sub">c</sub> : <i>V</i>(${frac('1','<i>c</i>')})`, color: '#007A6E', desc: '相对论光速极限 (Relativity)' },
+        { html: `+${vec('e')}<sub class="m-sub">N</sub> : <i>N</i>(<i>k</i><sub class="m-sub">B</sub>)`, color: '#D97706', desc: '多体统计自由度 (Many-Body)' }
+      ];
+      document.getElementById('basisLegendList').innerHTML = basisItems.map(b => `
+        <div class="flex items-center justify-between py-1 border-b swiss-border-subtle">
+          <span class="font-bold math-expr" style="color:${b.color};">${b.html}</span>
+          <span class="text-[11px]">${b.desc}</span>
+        </div>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 6. 4-AXIS ROTATION SLIDER & POINTER / ZOOM INTERACTION
+    // =========================================================================
+    function update4dSliders() {
+      rotAngles.xw = parseFloat(document.getElementById('sliderXW').value);
+      rotAngles.yw = parseFloat(document.getElementById('sliderYW').value);
+      rotAngles.zw = parseFloat(document.getElementById('sliderZW').value);
+      rotAngles.xy = parseFloat(document.getElementById('sliderXY').value);
+      rotAngles.xz = parseFloat(document.getElementById('sliderXZ').value);
+      rotAngles.dist = parseFloat(document.getElementById('sliderDist4d').value) / 10;
+
+      document.getElementById('lblAngleXW').textContent = `${Math.round(rotAngles.xw)}°`;
+      document.getElementById('lblAngleYW').textContent = `${Math.round(rotAngles.yw)}°`;
+      document.getElementById('lblAngleZW').textContent = `${Math.round(rotAngles.zw)}°`;
+      document.getElementById('lblAngleXY').textContent = `${Math.round(rotAngles.xy)}°`;
+      document.getElementById('lblAngleXZ').textContent = `${Math.round(rotAngles.xz)}°`;
+      document.getElementById('lblDist4d').textContent = rotAngles.dist.toFixed(1);
+      draw4dCanvas();
+    }
+
+    function syncSlidersFromState() {
+      document.getElementById('sliderXW').value = Math.round(rotAngles.xw);
+      document.getElementById('sliderYW').value = Math.round(rotAngles.yw);
+      document.getElementById('sliderZW').value = Math.round(rotAngles.zw);
+      document.getElementById('sliderXY').value = Math.round(rotAngles.xy);
+      document.getElementById('sliderXZ').value = Math.round(rotAngles.xz);
+      document.getElementById('sliderDist4d').value = Math.round(rotAngles.dist * 10);
+      update4dSliders();
+    }
+
+    function set4dPreset(mode) {
+      autoRotate4d = false;
+      document.getElementById('btnAutoRotate4d').textContent = '▶ 开启 4D 旋转';
+      resetZoomAndPan();
+      if (mode === 'schlegel') {
+        camYaw = -25;
+        camPitch = 19;
+        rotAngles = { xw: 0, yw: 0, zw: 0, xy: 0, xz: 0, dist: 1.85 };
+      } else if (mode === 'petrie') {
+        camYaw = -35;
+        camPitch = 25;
+        rotAngles = { xw: 38, yw: -38, zw: 22, xy: 0, xz: 0, dist: 2.2 };
+      } else if (mode === 'hasse') {
+        camYaw = -45;
+        camPitch = 35;
+        rotAngles = { xw: 0, yw: 0, zw: 0, xy: 45, xz: 0, dist: 2.1 };
+      }
+      syncSlidersFromState();
+    }
+
+    function toggleAutoRotate4d() {
+      autoRotate4d = !autoRotate4d;
+      document.getElementById('btnAutoRotate4d').textContent = autoRotate4d ? '⏸ 暂停 4D 旋转' : '▶ 开启 4D 旋转';
+    }
+
+    function start4dLoop() {
+      if (animFrame4d) cancelAnimationFrame(animFrame4d);
+      function step() {
+        const view4dVisible = !document.getElementById('view4d').classList.contains('hidden');
+        if (view4dVisible && autoRotate4d && !isDragging4d) {
+          rotAngles.xy = ((rotAngles.xy + 180.45) % 360) - 180;
+          camYaw = ((camYaw + 180.18) % 360) - 180;
+          syncSlidersFromState();
+        }
+        animFrame4d = requestAnimationFrame(step);
+      }
+      animFrame4d = requestAnimationFrame(step);
+    }
+
+    function init4dCanvasInteraction() {
+      const canvas = document.getElementById('canvas4d');
+
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.12 : -0.12;
+        adjustZoom(delta);
+      }, { passive: false });
+
+      canvas.addEventListener('pointerdown', e => {
+        isDragging4d = true;
+        dragMoved4d = false;
+        lastMouse4d = { x: e.clientX, y: e.clientY };
+      });
+
+      window.addEventListener('pointermove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+
+        if (!isDragging4d) {
+          if (cx >= 0 && cx <= rect.width && cy >= 0 && cy <= rect.height) {
+            let foundHover = null;
+            for (let i = lastProjectedNodes4d.length - 1; i >= 0; i--) {
+              const box = lastProjectedNodes4d[i];
+              if (cx >= box.x1 && cx <= box.x2 && cy >= box.y1 && cy <= box.y2) {
+                foundHover = box.id;
+                break;
+              }
+            }
+            if (foundHover !== hoveredVertexId) {
+              hoveredVertexId = foundHover;
+              draw4dCanvas();
+            }
+          }
+          return;
+        }
+
+        const dx = e.clientX - lastMouse4d.x;
+        const dy = e.clientY - lastMouse4d.y;
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved4d = true;
+        lastMouse4d = { x: e.clientX, y: e.clientY };
+
+        if (e.shiftKey) {
+          panOffset.x += dx;
+          panOffset.y += dy;
+        } else {
+          camYaw = Math.max(-180, Math.min(180, camYaw + dx * 0.45));
+          camPitch = Math.max(-85, Math.min(85, camPitch + dy * 0.45));
+        }
+        draw4dCanvas();
+      });
+
+      window.addEventListener('pointerup', e => {
+        if (isDragging4d && !dragMoved4d) {
+          const rect = canvas.getBoundingClientRect();
+          const cx = e.clientX - rect.left;
+          const cy = e.clientY - rect.top;
+          for (let i = lastProjectedNodes4d.length - 1; i >= 0; i--) {
+            const box = lastProjectedNodes4d[i];
+            if (cx >= box.x1 && cx <= box.x2 && cy >= box.y1 && cy <= box.y2) {
+              selectVertex(box.id);
+              break;
+            }
+          }
+        }
+        isDragging4d = false;
+      });
+
+      window.addEventListener('resize', () => draw4dCanvas());
+    }
+
+    // =========================================================================
+    // 7. EXPORT & LATEX FUNCTIONS
+    // =========================================================================
+    function showToast(msg) {
+      const el = document.getElementById('toastBanner');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2500);
+    }
+
+    function exportSvgFile() {
+      const svgEl = document.getElementById('tesseractSvg');
+      const serializer = new XMLSerializer();
+      let source = serializer.serializeToString(svgEl);
+      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bronstein_tesseract_swiss.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('SVG VECTOR EXPORTED');
+    }
+
+    function exportPngFile() {
+      const view4dVisible = !document.getElementById('view4d').classList.contains('hidden');
+      if (view4dVisible) {
+        const canvas = document.getElementById('canvas4d');
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'bronstein_tesseract_4d_cube.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('4D CUBE-IN-CUBE PNG EXPORTED');
+        });
+        return;
+      }
+      const svgEl = document.getElementById('tesseractSvg');
+      const serializer = new XMLSerializer();
+      const source = serializer.serializeToString(svgEl);
+      const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2120;
+        canvas.height = 1840;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(pngBlob => {
+          const pngUrl = URL.createObjectURL(pngBlob);
+          const a = document.createElement('a');
+          a.href = pngUrl;
+          a.download = 'bronstein_tesseract_2d_orthogonal.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(pngUrl);
+          showToast('2D ORTHOGONAL PNG EXPORTED');
+        });
+      };
+      img.src = url;
+    }
+
+    const LATEX_TIKZ_SOURCE = `% ============================================================================
+% BRONSTEIN'S TESSERACT: CUBE-IN-CUBE 4D SCHLEGEL PROJECTION (LaTeX TikZ)
+% Inner Cube (N=0): Original cGh Cube | Outer Cube (N=1): Many-Body Extension
+% ============================================================================
+\\documentclass[tikz,border=12pt]{standalone}
+\\usepackage{amsmath,amssymb}
+\\usepackage{xcolor}
+\\usetikzlibrary{arrows.meta,calc,positioning,backgrounds}
+
+\\definecolor{swisspaper}{RGB}{246, 245, 240}
+\\definecolor{swissink}{RGB}{18, 18, 18}
+\\definecolor{swissred}{RGB}{255, 51, 0}
+\\definecolor{swissblue}{RGB}{0, 71, 171}
+\\definecolor{swissteal}{RGB}{0, 122, 110}
+\\definecolor{swissamber}{RGB}{217, 119, 6}
+
+\\begin{document}
+\\begin{tikzpicture}[
+    scale=1.0,
+    every node/.style={font=\\sffamily},
+    inner_node/.style={draw=swissblue, line width=1pt, fill=white, inner sep=3pt, align=center, font=\\sffamily\\bfseries\\scriptsize},
+    outer_node/.style={draw=swissink, line width=1pt, fill=swisspaper, inner sep=3pt, align=center, font=\\sffamily\\bfseries\\scriptsize},
+    inner_edge/.style={draw=swissblue, line width=0.95pt, -{Latex[length=2mm,width=1.4mm]}},
+    outer_edge/.style={draw=swissink, line width=0.95pt, -{Latex[length=2mm,width=1.4mm]}},
+    n_edge/.style={draw=swissamber, line width=0.8pt, dashed, -{Latex[length=2mm,width=1.4mm]}},
+    duality_arc/.style={draw=swissred, line width=1.2pt, {Latex[length=2.2mm,width=1.6mm]}-{Latex[length=2.2mm,width=1.6mm]}}
+]
+
+% Inner cGh Cube (N=0)
+\\coordinate (CM)   at (-2.3, -1.9); % (0,0,0,0)
+\\coordinate (SR)   at ( 1.5, -1.9); % (0,0,1,0)
+\\coordinate (NG)   at (-2.3,  1.5); % (1,0,0,0)
+\\coordinate (GR)   at ( 1.5,  1.5); % (1,0,1,0)
+\\coordinate (QM)   at (-1.1, -0.7); % (0,1,0,0)
+\\coordinate (QFT)  at ( 2.5, -0.7); % (0,1,1,0)
+\\coordinate (NQG)  at (-1.1,  2.5); % (1,1,0,0)
+\\coordinate (QG)   at ( 2.5,  2.5); % (1,1,1,0)
+
+% Outer Statistical Cube (N=1)
+\\coordinate (SM)    at (-5.6, -4.6); % (0,0,0,1)
+\\coordinate (RSM)   at ( 3.6, -4.6); % (0,0,1,1)
+\\coordinate (SD)    at (-5.6,  3.6); % (1,0,0,1)
+\\coordinate (COSMO) at ( 3.6,  3.6); % (1,0,1,1)
+\\coordinate (QSM)   at (-3.0, -2.5); % (0,1,0,1)
+\\coordinate (TQFT)  at ( 5.8, -2.5); % (0,1,1,1)
+\\coordinate (QSGS)  at (-3.0,  5.4); % (1,1,0,1)
+\\coordinate (BHT)   at ( 5.8,  5.4); % (1,1,1,1)
+
+% Two Teal Plaquette Faces:
+% 1. Noether's Symmetry = CM - SR - QFT - QM
+% 2. Compact Objects Phase Diagram = SD - QSGS - BHT - COSMO
+\\fill[swissteal!16, draw=swissteal, line width=1.2pt, dashed] (CM) -- (SR) -- (QFT) -- (QM) -- cycle;
+\\fill[swissteal!16, draw=swissteal, line width=1.2pt, dashed] (SD) -- (QSGS) -- (BHT) -- (COSMO) -- cycle;
+
+% 12 Inner Cube Edges + 12 Outer Cube Edges + 8 Radial N-Edges
+\\draw[inner_edge] (CM)--(NG) (CM)--(QM) (CM)--(SR) (NG)--(NQG) (NG)--(GR) (QM)--(NQG) (QM)--(QFT) (SR)--(GR) (SR)--(QFT) (NQG)--(QG) (GR)--(QG) (QFT)--(QG);
+\\draw[outer_edge] (SM)--(SD) (SM)--(QSM) (SM)--(RSM) (SD)--(QSGS) (SD)--(COSMO) (QSM)--(QSGS) (QSM)--(TQFT) (RSM)--(COSMO) (RSM)--(TQFT) (QSGS)--(BHT) (COSMO)--(BHT) (TQFT)--(BHT);
+\\draw[n_edge] (CM)--(SM) (NG)--(SD) (QM)--(QSM) (SR)--(RSM) (NQG)--(QSGS) (GR)--(COSMO) (QFT)--(TQFT) (QG)--(BHT);
+
+% 5 Exact Dualities:
+% AdS/CFT: Edge QG-BHT <-> Edge QFT-TQFT
+\\draw[duality_arc] ($(QG)!0.5!(BHT)$) to[bend left=25] node[right, font=\\sffamily\\bfseries\\scriptsize, text=swissred] {AdS/CFT} ($(QFT)!0.5!(TQFT)$);
+% AdS/CMT: QSM <-> BHT
+\\draw[duality_arc] (QSM) to[bend right=25] node[below right, font=\\sffamily\\bfseries\\scriptsize, text=swissred] {AdS/CMT} (BHT);
+% Wick Rotation: SM <-> QM
+\\draw[duality_arc] (SM) to[bend left=22] node[left, font=\\sffamily\\bfseries\\scriptsize, text=swissred] {Wick Rotation} (QM);
+% ER=EPR: QM <-> GR
+\\draw[duality_arc] (QM) to[bend left=18] node[above left, font=\\sffamily\\bfseries\\scriptsize, text=swissred] {ER=EPR} (GR);
+% Double Copy: Edge GR-QG <-> Vertex QFT
+\\draw[duality_arc] ($(GR)!0.5!(QG)$) to[bend left=18] node[right, font=\\sffamily\\bfseries\\scriptsize, text=swissred] {Double Copy} (QFT);
+
+% Nodes
+\\foreach \\id/\\lbl in {CM/CM,NG/NG,QM/QM,SR/SR,NQG/Newtonian QG,GR/GR,QFT/QFT,QG/QG (ToE)} { \\node[inner_node] at (\\id) {\\lbl}; }
+\\foreach \\id/\\lbl in {SM/SM,SD/SD (SGS),QSM/QSM (CMP),RSM/RSM (RHD),QSGS/QSGS,COSMO/Cosmo. (GRHD),TQFT/[Thermo.]-QFT,BHT/BHT} { \\node[outer_node] at (\\id) {\\lbl}; }
+\\end{tikzpicture}
+\\end{document}`;
+
+    function copyLatexCode() {
+      const textarea = document.createElement('textarea');
+      textarea.value = LATEX_TIKZ_SOURCE;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('LATEX TIKZ SOURCE COPIED');
+      } catch (err) {
+        showToast('COPY FAILED');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function downloadLatexFile() {
+      const blob = new Blob([LATEX_TIKZ_SOURCE], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bronstein_tesseract.tex';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('DOWNLOADED BRONSTEIN_TESSERACT.TEX');
+    }
+
+    function renderElementsTable() {
+      const query = (document.getElementById('tableSearchInput').value || '').trim().toLowerCase();
+      const tbody = document.getElementById('elementsTableBody');
+      let rowsHtml = '';
+
+      VERTICES.forEach(v => {
+        const blob = `${v.label} ${v.en} ${v.zh} ${v.descHtml} (${v.coords.join(',')})`.toLowerCase();
+        if (query && !blob.includes(query)) return;
+        rowsHtml += `
+          <tr class="hover:opacity-80 cursor-pointer" onclick="switchMainTab('4d'); selectVertex('${v.id}')">
+            <td class="py-2 px-2.5 mono font-bold">VERTEX W=${v.weight}</td>
+            <td class="py-2 px-2.5 mono font-bold" style="color: var(--swiss-blue);">(${v.coords.join(', ')})</td>
+            <td class="py-2 px-2.5 font-extrabold">${v.label}</td>
+            <td class="py-2 px-2.5">${v.en}<br><span style="color: var(--ink-muted);">${v.zh}</span></td>
+            <td class="py-2 px-2.5 max-w-md">${v.descHtml}</td>
+          </tr>
+        `;
+      });
+
+      Object.entries(ANNOTATIONS).forEach(([k, item]) => {
+        const blob = `${item.title} ${item.sub} ${item.descHtml} ${item.coord}`.toLowerCase();
+        if (query && !blob.includes(query)) return;
+        rowsHtml += `
+          <tr class="hover:opacity-80 cursor-pointer" onclick="switchMainTab('4d'); selectAnnotation('${k}')">
+            <td class="py-2 px-2.5 mono font-bold" style="color: var(--intl-orange);">${item.badge.split('·')[0]}</td>
+            <td class="py-2 px-2.5 mono font-bold" style="color: var(--swiss-teal);">${item.coord}</td>
+            <td class="py-2 px-2.5 font-extrabold">${item.title}</td>
+            <td class="py-2 px-2.5">${item.sub}</td>
+            <td class="py-2 px-2.5 max-w-md">${item.descHtml}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    // =========================================================================
+    // 8. MAIN TAB NAVIGATION & INIT
+    // =========================================================================
+    function switchMainTab(tab) {
+      const views = { '4d': 'view4d', '2d': 'view2d', 'acopd': 'viewAcopd', 'latex': 'viewLatex' };
+      const btns  = { '4d': 'tabBtn4d', '2d': 'tabBtn2d', 'acopd': 'tabBtnAcopd', 'latex': 'tabBtnLatex' };
+
+      Object.entries(views).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        if (k === tab) {
+          el.classList.remove('hidden');
+          el.classList.add('flex');
+        } else {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        }
+      });
+
+      Object.entries(btns).forEach(([k, id]) => {
+        const btn = document.getElementById(id);
+        if (k === tab) btn.classList.add('swiss-tab-active');
+        else btn.classList.remove('swiss-tab-active');
+      });
+
+      if (tab === '4d') {
+        setTimeout(() => draw4dCanvas(), 15);
+      } else if (tab === 'acopd') {
+        selectAnnotation('compact');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateCategorizedDockAndRightLists();
+      document.getElementById('latexCodeBlock').textContent = LATEX_TIKZ_SOURCE;
+      renderElementsTable();
+      init4dCanvasInteraction();
+      selectAnnotation('adscft');
+      start4dLoop();
+    });
+  </script>
+</body>
+</html>
